@@ -6,14 +6,8 @@ statistics without having to write any boilerplate code.
 # Agenda
 
 ## Stage 2
-- File with default training and testing function implementations
-- Port adadelta
-- Port the csv logger so that we can use it for the optimizers
 - Function to set up default command-line arguments
 - Test on a simple example
-
-## Stage 3
-- Port the other optimizers
 
 # Future Features
 

@@ -186,19 +186,34 @@ function batch_provider:infer_properties(data)
 	end
 end
 
-function batch_provider:make_sampler(data)
+function batch_provider:make_sampler(mode)
+	local data, shuffle, strategy
+
+	if mode == "train" then
+		data     = self.train_data
+		shuffle  = self.shuffle
+		strategy = self.sampling_strategy
+	else
+		-- In testing mode, there's no reason to use shuffling or the
+		-- alternating sampling strategy.
+
+		data     = {self.test_data}
+		shuffle  = false
+		strategy = "sequential"
+	end
+	
 	local args = {
 		data         = data,
 		batch_size   = self.batch_size,
 		target       = self.target,
-		shuffle      = self.shuffle,
+		shuffle      = shuffle,
 		input_shape  = self.input_shape,
 		target_shape = self.target_shape,
 		input_type   = self.input_type,
 		target_type  = self.target_type
 	}
 
-	if self.sampling_strategy == "alternating" then
+	if strategy == "alternating" then
 		return lantern.alternating_batch_sampler(args)
 	else
 		return lantern.sequential_batch_sampler(args)
@@ -206,9 +221,9 @@ function batch_provider:make_sampler(data)
 end
 
 function batch_provider:make_train_sampler()
-	return self:make_sampler(self.train_data)
+	return self:make_sampler("train")
 end
 
 function batch_provider:make_test_sampler()
-	return self:make_sampler({self.test_data})
+	return self:make_sampler("test")
 end

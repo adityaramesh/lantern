@@ -17,7 +17,7 @@ end
 
 -- Note: each row of outputs should contain the probabilities or log
 -- probabilities of the classes.
-function accuracy:update(outputs, targets)
+function accuracy:update(outputs, loss, targets)
 	if type(targets) ~= "number" then
 		local t = targets:type()
 		assert(
