@@ -5,10 +5,6 @@ statistics without having to write any boilerplate code.
 
 # Agenda
 
-## Stage 1
-- Write a test for the batch provider
-- Write a test for the accuracy accumulator
-
 ## Stage 2
 - File with default training and testing function implementations
 - Port adadelta

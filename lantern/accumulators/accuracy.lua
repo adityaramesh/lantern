@@ -1,9 +1,11 @@
 require "torch"
+require "cutorch"
+
 local accuracy = lantern.make_accumulator("accuracy")
 
 function accuracy:__init(classes)
 	assert(
-		self.classes > 1,
+		classes > 1,
 		"Number of classes must be greater than one. For binary " ..
 		"classification, use the indices one and two."
 	)
@@ -16,6 +18,15 @@ end
 -- Note: each row of outputs should contain the probabilities or log
 -- probabilities of the classes.
 function accuracy:update(outputs, targets)
+	if type(targets) ~= "number" then
+		local t = targets:type()
+		assert(
+			t == "torch.ByteTensor" or
+			t == "torch.LongTensor" or
+			t == "torch.CudaTensor"
+		)
+	end
+
 	assert(
 		outputs:nDimension() <= 2,
 		"`outputs` must either be a vector or a matrix whose rows " ..
@@ -42,7 +53,7 @@ function accuracy:update(outputs, targets)
 		local _, indices = torch.max(outputs, 1)
 		self.total = self.total + 1
 
-		if indices[1] == target then
+		if indices[1] == targets then
 			self.correct = self.correct + 1
 		end
 	else

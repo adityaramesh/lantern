@@ -6,7 +6,6 @@
 -- * Shuffling or no shuffling.
 --
 
-require "sys"
 dofile "init.lua"
 
 local train_files = {
