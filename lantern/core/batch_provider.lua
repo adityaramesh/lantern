@@ -32,11 +32,11 @@ local function validate_args(args)
 
 	if args.sampling_strategy then
 		assert(
-			args.sampling_strategy == "alternate" or
+			args.sampling_strategy == "alternating" or
 			args.sampling_strategy == "sequential"
 		)
 	else
-		args.sampling_strategy = "alternate"
+		args.sampling_strategy = "alternating"
 	end
 
 	if not args.logger then
@@ -56,10 +56,10 @@ end
 -- * batch_size (optional): The size of the batches returned by the samplers.
 --   Default: 1.
 -- * sampling_strategy (optional): The strategy used to determine how to make
---   use of multiple training files. Supported options: "alternate" (sample one
---   instance from each file in a round-robin fashion), and "sequential" (sample
---   all instances from one file before moving on to the next). Default:
---   "alternate".
+--   use of multiple training files. Supported options: "alternating" (sample
+--   one instance from each file in a round-robin fashion), and "sequential"
+--   (sample all instances from one file before moving on to the next). Default:
+--   "alternating".
 -- * shuffle (optional): Indicates whether the data in the training files should
 --   be accessed in a random order that is determined at the start of each
 --   training epoch. Default: `true`.
@@ -117,7 +117,7 @@ function batch_provider:load_train_data()
 		self.train_data[#self.train_data + 1] = data
 	end
 
-	if self.sampling_strategy == "alternate" then
+	if self.sampling_strategy == "alternating" then
 		-- Here's the picture used to derive this:
 		--
 		-- Dataset 1   Dataset 2   Dataset 3
@@ -136,7 +136,7 @@ function batch_provider:load_train_data()
 			self.batch_size
 		)
 	else
-		self.train_batches = self.total_train_size / self.batch_size
+		self.train_batches = math.floor(self.total_train_size / self.batch_size)
 		if self.total_train_size % self.batch_size ~= 0 then
 			self.train_batches = self.train_batches + 1
 		end
@@ -198,7 +198,7 @@ function batch_provider:make_sampler(data)
 		target_type  = self.target_type
 	}
 
-	if self.sampling_strategy == "alternate" then
+	if self.sampling_strategy == "alternating" then
 		return lantern.alternating_batch_sampler(args)
 	else
 		return lantern.sequential_batch_sampler(args)

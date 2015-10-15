@@ -74,14 +74,18 @@ function alternating_batch_sampler:next()
 	for i = 1, self.batch_size do
 		local offset = self.index + i - 1
 		local dataset = (offset - 1) % #self.data + 1
-		local instance = (offset - dataset) / #self.data + 1
+
+		local size = self.data[dataset].inputs:size(1)
+		local instance = ((offset - dataset) / #self.data) % size + 1
 		local new_index = self.access_strategy:index(dataset, instance)
 
 		assert(new_index >= 1)
-		assert(new_index <= self.data[dataset].inputs:size(1))
+		assert(new_index <= size)
 
-		self.input_buffer[{{i}}]:copy(self.data[dataset].inputs[{{new_index}}])
-		self.target_buffer[{{i}}]:copy(self.data[dataset].targets[{{new_index}}])
+		self.input_buffer[{{i}}]:copy(
+			self.data[dataset].inputs[{{new_index}}])
+		self.target_buffer[{{i}}]:copy(
+			self.data[dataset].targets[{{new_index}}])
 	end
 
 	self.index = self.index + self.batch_size
@@ -91,12 +95,15 @@ end
 function sequential_batch_sampler:__init(args)
 	initialize(self, args)
 
-	self.cum_sizes = {[0] = 0}
+	self.cum_sizes = {}
 	for i = 1, #self.data do
 		self.cum_sizes[i] = self.data[i].inputs:size(1)
 	end
 
 	self.cum_sizes = torch.Tensor(self.cum_sizes):cumsum()
+	self.cum_sizes = torch.totable(self.cum_sizes)
+	self.cum_sizes[0] = 0
+	
 	self.dataset = 1
 end
 
@@ -112,12 +119,20 @@ function sequential_batch_sampler:next()
 		assert(count_1 >= 1)
 		assert(count_1 <= self.batch_size)
 
-		local count_2 = self.batch_size - count_1
+		local count_2
+		if self.dataset == #self.data then
+			count_2 = 0 
+		else
+			count_2 = self.batch_size - count_1
+		end
+
 		local base = self.index - self.cum_sizes[self.dataset - 1] - 1
 
 		for i = 1, count_1 do
-			self.input_buffer[{{i}}]:copy(self.data[self.dataset].inputs[{{base + i}}])
-			self.target_buffer[{{i}}]:copy(self.data[self.dataset].targets[{{base + i}}])
+			self.input_buffer[{{i}}]:copy(
+				self.data[self.dataset].inputs[{{base + i}}])
+			self.target_buffer[{{i}}]:copy(
+				self.data[self.dataset].targets[{{base + i}}])
 		end
 
 		for i = 1, count_2 do
@@ -129,34 +144,24 @@ function sequential_batch_sampler:next()
 
 		self.index = self.index + self.batch_size
 		self.dataset = self.dataset + 1
-		return self.input_buffer, self.target_buffer
-	elseif self.index + self.batch_size > self.cum_sizes[#self.cum_sizes] then
-		-- This is the case in which we have to use a slightly smaller
-		-- minibatch, so that we do not go past the end of the last
-		-- dataset.
 
-		assert(self.dataset == #self.cum_sizes)
-		local count = self.cum_sizes[#self.cum_sizes] - self.index + 1
-		local base = self.index - self.cum_sizes[#self.cum_sizes - 1] - 1
-
-		for i = 1, count do
-			self.input_buffer[{{i}}]:copy(self.data[#self.data].inputs[{{base + i}}])
-			self.target_buffer[{{i}}]:copy(self.data[#self.data].targets[{{base + i}}])
+		if count_2 > 0 then
+			return self.input_buffer, self.target_buffer
+		else
+			return self.input_buffer[{{1, count_1}}],
+				self.target_buffer[{{1, count_1}}]
 		end
-
-		self.index = self.index + self.batch_size
-		self.dataset = self.dataset + 1
-		return self.input_buffer[{{1, count}}], self.target_buffer[{{1, count}}]
 	else
-		local base = self.index - self.cum_sizes[#self.dataset - 1] - 1
+		local base = self.index - self.cum_sizes[self.dataset - 1] - 1
 
 		for i = 1, self.batch_size do
-			self.input_buffer[{{i}}]:copy(self.data[#self.data].inputs[{{base + i}}])
-			self.target_buffer[{{i}}]:copy(self.data[#self.data].targets[{{base + i}}])
+			self.input_buffer[{{i}}]:copy(
+				self.data[self.dataset].inputs[{{base + i}}])
+			self.target_buffer[{{i}}]:copy(
+				self.data[self.dataset].targets[{{base + i}}])
 		end
 
 		self.index = self.index + self.batch_size
-		self.dataset = self.dataset + 1
 		return self.input_buffer, self.target_buffer
 	end
 end
