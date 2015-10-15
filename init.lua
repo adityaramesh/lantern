@@ -48,16 +48,19 @@ require "lantern/accumulators/accuracy"
 require "lantern/accumulators/zip"
 
 lantern.criterion = {}
+
 require "lantern/criteria"
 
--- TODO
---
--- lantern.optimizers = {}
--- require "lantern/momentum"
--- require "lantern/schedule"
--- require "lantern/sgu"
--- require "lantern/rmsprop"
--- require "lantern/adadelta"
+lantern.momentum   = {}
+lantern.schedule   = {}
+lantern.optimizers = {}
+
+require "lantern/optimize/momentum"
+require "lantern/optimize/schedule"
+require "lantern/optimize/sgu"
+require "lantern/optimize/rmsprop"
+require "lantern/optimize/adadelta"
+require "lantern/optimize/adadelta_lm"
 
 -- Define the abstract resources that can be updated by the model driver. We use
 -- this convention so that events that are logged can either be printed to
@@ -75,10 +78,12 @@ require "lantern/core/io"
 require "lantern/core/access_strategy"
 require "lantern/core/batch_sampler"
 require "lantern/core/batch_provider"
+-- require "lantern/core/driver"
 
+require "lantern/core/csv_logger"
 require "lantern/core/stdout_logger"
 require "lantern/core/serializer"
--- require "lantern/core/epoch"
+
 require "lantern/core/run"
 
 return latern
