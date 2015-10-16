@@ -6,9 +6,9 @@ function zip:__init(accs)
 	self.accs = accs
 end
 
-function zip:update(outputs, loss, targets)
+function zip:update(batch, state)
 	for _, v in pairs(self.accs) do
-		v:update(outputs, loss, targets)
+		v:update(batch, state)
 	end
 end
 

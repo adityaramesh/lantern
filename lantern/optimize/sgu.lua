@@ -101,15 +101,15 @@ function sgu:update(input, target)
 	assert(cur_lr > 0 and cur_lr <= 1)
 
 	if self.mom_type == lantern.momentum.none then
-		local outputs, loss = self.model:evaluate(input, target)
+		local state = self.model:evaluate(input, target)
 		self.params:add(-cur_lr, self.grad_params)
 		self:log_info(input, target, cur_lr, loss)
-		return outputs, loss
+		return state
 	elseif self.mom_type == lantern.momentum.nag then
 		-- For the first iteration, we just take the direction of
 		-- steepest descent.
 		if not self.state.step then
-			local outputs, loss = self.model:evaluate(input, target)
+			local state = self.model:evaluate(input, target)
 			self.state.step = self.grad_params:clone():mul(-cur_lr)
 			self.params:add(self.state.step)
 
@@ -124,7 +124,7 @@ function sgu:update(input, target)
 				self:log_nag_info(input, target, cur_lr, loss)
 			end
 
-			return outputs, loss
+			return state
 		end
 
 		local cur_mom = self.mom(iter)
@@ -133,7 +133,7 @@ function sgu:update(input, target)
 		-- Evaluate the function at the trial point.
 		self.state.step:mul(cur_mom)
 		self.params:add(self.state.step)
-		local outputs, loss = self.model:evaluate(input, target)
+		local state = self.model:evaluate(input, target)
 
 		-- Update the parameters. We don't multiply the gradient by
 		-- `-cur_lr` in advance because the logging function requires
@@ -148,7 +148,7 @@ function sgu:update(input, target)
 			self.state.prev_grad_params:copy(self.grad_params)
 		end
 
-		return outputs, loss
+		return state
 	else
 		error("Unsupported momentum type.")
 	end

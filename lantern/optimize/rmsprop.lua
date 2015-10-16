@@ -112,7 +112,7 @@ function rmsprop:update(input, target)
 	end
 
 	if self.mom_type == lantern.momentum.none then
-		local outputs, loss = self.model:evaluate(input, target)
+		local state = self.model:evaluate(input, target)
 
 		-- Update the estimate of the second moment of the gradient.
 		self.state.temp:pow(self.grad_params, 2)
@@ -122,7 +122,7 @@ function rmsprop:update(input, target)
 		self.params:addcdiv(-cur_lr, self.grad_params, self.state.temp)
 		self:log_info(input, target, cur_lr, loss)
 
-		return outputs, loss
+		return state
 	elseif self.mom_type == lantern.momentum.nag then
 		if not self.state.step then
 			self.state.step = torch.Tensor():typeAs(self.params):
@@ -140,7 +140,7 @@ function rmsprop:update(input, target)
 		-- Evaluate the function at the trial point.
 		self.state.step:mul(cur_mom)
 		self.params:add(self.state.step)
-		local outputs, loss = self.model:evaluate(input, target)
+		local state = self.model:evaluate(input, target)
 
 		-- Update the estimate of the second moment of the gradient.
 		self.state.temp:pow(self.grad_params, 2)
@@ -159,7 +159,7 @@ function rmsprop:update(input, target)
 			self.state.prev_grad_params:copy(self.grad_params)
 		end
 
-		return outputs, loss
+		return state
 	else
 		error("Unsupported momentum type.")
 	end

@@ -26,19 +26,28 @@ function dummy_model:output_shape()
 	return torch.LongStorage{10}
 end
 
-function dummy_model:forward(inputs, targets)
+function dummy_model:predict(batch)
+	local inputs = batch.inputs
+	local targets = batch.targets
+
 	if inputs:nDimension() == 2 then
-		return self.outputs, 100
+		return {
+			outputs = self.outputs,
+			loss = 100
+		}
 	elseif inputs:nDimension() == 3 then
 		local bs = inputs:size(1)
-		return torch.repeatTensor(self.outputs, bs, 1), bs * 100
+		return {
+			outputs = torch.repeatTensor(self.outputs, bs, 1),
+			loss = bs * 100
+		}
 	else
 		error("Unexpected number of input dimensions.")
 	end
 end
 
-function dummy_model:evaluate(inputs, targets)
-	return self:forward(inputs, targets)
+function dummy_model:evaluate(batch)
+	return self:predict(batch)
 end
 
 local info = lantern.parse_options()

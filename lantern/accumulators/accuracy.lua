@@ -17,7 +17,12 @@ end
 
 -- Note: each row of outputs should contain the probabilities or log
 -- probabilities of the classes.
-function accuracy:update(outputs, loss, targets)
+function accuracy:update(batch, state)
+	local targets = batch.targets
+	local outputs = state.outputs
+	assert(targets)
+	assert(outputs)
+
 	if type(targets) ~= "number" then
 		local t = targets:type()
 		assert(

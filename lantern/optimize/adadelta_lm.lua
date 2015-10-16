@@ -51,7 +51,7 @@ function adadelta_lm:update(input, target)
 	end
 
 	if self.mom_type == lantern.momentum.none then
-		local outputs, loss = self.model:evaluate(input, target)
+		local state = self.model:evaluate(input, target)
 		self.state.temp:pow(self.grad_params, 2)
 		self.state.grad_mom_2:mul(cur_decay):add(1 - cur_decay, self.state.temp)
 
@@ -70,7 +70,7 @@ function adadelta_lm:update(input, target)
 		self.state.temp:pow(2):mul(1 - cur_decay)
 		self.state.update_mom_2:mul(cur_decay):add(self.state.temp)
 
-		return outputs, loss
+		return state
 	elseif self.mom_type == lantern.momentum.nag then
 		if not self.state.step then
 			self.state.step = torch.Tensor():typeAs(self.params):
@@ -83,7 +83,7 @@ function adadelta_lm:update(input, target)
 		-- Evaluate the function at the trial point.
 		self.state.step:mul(cur_mom)
 		self.params:add(self.state.step)
-		local outputs, loss = self.model:evaluate(input, target)
+		local state = self.model:evaluate(input, target)
 
 		self.state.temp:pow(self.grad_params, 2)
 		self.state.grad_mom_2:mul(cur_decay):add(1 - cur_decay, self.state.temp)
@@ -105,7 +105,7 @@ function adadelta_lm:update(input, target)
 		self.state.temp:pow(self.state.step, 2)
 		self.state.update_mom_2:mul(cur_decay):add(1 - cur_decay, self.state.temp)
 
-		return outputs, loss
+		return state
 	else
 		error("Unsupported momentum type.")
 	end

@@ -32,9 +32,9 @@ function driver:train_epoch(model, optim, acc, logger)
 
 	for i = 1, self.bp.train_batches do
 		local start = sys.clock()
-		local inputs, targets = sampler:next()
-		local outputs, loss = optim:update(inputs, targets)
-		acc:update(outputs, loss, targets)
+		local batch = sampler:next()
+		local state = optim:update(batch)
+		acc:update(batch, state)
 
 		logger:update("/progress", {
 			processed_instances = i,
@@ -51,9 +51,9 @@ function driver:test_epoch(model, optim, acc, logger)
 
 	for i = 1, self.bp.test_batches do
 		local start = sys.clock()
-		local inputs, targets = sampler:next()
-		local outputs, loss = model:forward(inputs, targets)
-		acc:update(outputs, loss, targets)
+		local batch = sampler:next()
+		local state = model:predict(batch)
+		acc:update(batch, state)
 
 		logger:update("/progress", {
 			processed_instances = i,

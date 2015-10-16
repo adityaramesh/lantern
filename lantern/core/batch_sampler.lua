@@ -89,7 +89,10 @@ function alternating_batch_sampler:next()
 	end
 
 	self.index = self.index + self.batch_size
-	return self.input_buffer, self.target_buffer
+	return {
+		inputs = self.input_buffer,
+		targets = self.target_buffer
+	}
 end
 
 function sequential_batch_sampler:__init(args)
@@ -146,10 +149,15 @@ function sequential_batch_sampler:next()
 		self.dataset = self.dataset + 1
 
 		if count_2 > 0 then
-			return self.input_buffer, self.target_buffer
+			return {
+				inputs = self.input_buffer,
+				targets = self.target_buffer
+			}
 		else
-			return self.input_buffer[{{1, count_1}}],
-				self.target_buffer[{{1, count_1}}]
+			return {
+				inputs = self.input_buffer[{{1, count_1}}],
+				targets = self.target_buffer[{{1, count_1}}]
+			}
 		end
 	else
 		local base = self.index - self.cum_sizes[self.dataset - 1] - 1
@@ -162,6 +170,9 @@ function sequential_batch_sampler:next()
 		end
 
 		self.index = self.index + self.batch_size
-		return self.input_buffer, self.target_buffer
+		return {
+			inputs = self.input_buffer,
+			targets = self.target_buffer
+		}
 	end
 end
