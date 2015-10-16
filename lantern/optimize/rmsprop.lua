@@ -11,6 +11,7 @@ function rmsprop:__init(model, state, logger)
 	self.grad_params = model:grad_parameters()
 	self.state       = state or {}
 
+	self.state.name = "rmsprop"
 	self.state.iter = self.state.iter          or 0
 	self.eps        = self.state.eps           or 1e-10
 	self.lr         = self.state.learning_rate or lantern.schedule.constant(1e-3)
@@ -110,7 +111,7 @@ function rmsprop:update(input, target)
 			resizeAs(self.params):zero()
 	end
 
-	if self.mom_type == sopt.none then
+	if self.mom_type == lantern.momentum.none then
 		local outputs, loss = self.model:evaluate(input, target)
 
 		-- Update the estimate of the second moment of the gradient.
@@ -122,7 +123,7 @@ function rmsprop:update(input, target)
 		self:log_info(input, target, cur_lr, loss)
 
 		return outputs, loss
-	elseif self.mom_type == sopt.nag then
+	elseif self.mom_type == lantern.momentum.nag then
 		if not self.state.step then
 			self.state.step = torch.Tensor():typeAs(self.params):
 				resizeAs(self.params):zero()

@@ -15,6 +15,7 @@ function adadelta_lm:__init(model, state)
 	self.grad_params = model:grad_parameters()
 	self.state       = state or {}
 
+	self.state.name = "adadelta_lm"
 	self.state.iter = self.state.iter          or 0
 	self.eps        = self.state.eps           or 1e-10
 	self.lr         = self.state.learning_rate or lantern.schedule.constant(1e-3)
@@ -49,7 +50,7 @@ function adadelta_lm:update(input, target)
 			resizeAs(self.params):zero()
 	end
 
-	if self.mom_type == sopt.none then
+	if self.mom_type == lantern.momentum.none then
 		local outputs, loss = self.model:evaluate(input, target)
 		self.state.temp:pow(self.grad_params, 2)
 		self.state.grad_mom_2:mul(cur_decay):add(1 - cur_decay, self.state.temp)
@@ -70,7 +71,7 @@ function adadelta_lm:update(input, target)
 		self.state.update_mom_2:mul(cur_decay):add(self.state.temp)
 
 		return outputs, loss
-	elseif self.mom_type == sopt.nag then
+	elseif self.mom_type == lantern.momentum.nag then
 		if not self.state.step then
 			self.state.step = torch.Tensor():typeAs(self.params):
 				resizeAs(self.params):zero()

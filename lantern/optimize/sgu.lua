@@ -11,6 +11,7 @@ function sgu:__init(model, state, logger)
 	self.grad_params = model:grad_parameters()
 	self.state       = state or {}
 
+	self.state.name = "sgu"
 	self.state.iter = self.state.iter          or 0
 	self.lr         = self.state.learning_rate or lantern.schedule.constant(1e-3)
 	self.mom        = self.state.momentum      or lantern.schedule.constant(0.95)
@@ -99,12 +100,12 @@ function sgu:update(input, target)
 	local cur_lr = self.lr(iter)
 	assert(cur_lr > 0 and cur_lr <= 1)
 
-	if self.mom_type == sopt.none then
+	if self.mom_type == lantern.momentum.none then
 		local outputs, loss = self.model:evaluate(input, target)
 		self.params:add(-cur_lr, self.grad_params)
 		self:log_info(input, target, cur_lr, loss)
 		return outputs, loss
-	elseif self.mom_type == sopt.nag then
+	elseif self.mom_type == lantern.momentum.nag then
 		-- For the first iteration, we just take the direction of
 		-- steepest descent.
 		if not self.state.step then
