@@ -65,7 +65,7 @@ function accuracy:update(outputs, loss, targets)
 
 		local _, indices = torch.max(outputs, 2)
 		self.total = self.total + outputs:size(1)
-		self.correct = self.correct + torch.eq(indices, targets):sum()
+		self.correct = self.correct + torch.eq(indices, targets:typeAs(indices)):sum()
 	end
 
 	assert(self.total > 0)
