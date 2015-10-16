@@ -4,13 +4,13 @@
 --
 
 require "sys"
-local epoch_provider = lantern.make_class("epoch_provider")
+local driver = lantern.make_class("driver")
 
 --
 -- The only argument to the constructor is the `batch_provider` instance used to
 -- construct mini-batches from the data.
 --
-function epoch_provider:__init(bp)
+function driver:__init(bp)
 	self.bp = bp
 
 	if bp.train_data then
@@ -26,9 +26,9 @@ function epoch_provider:__init(bp)
 	end
 end
 
-function epoch_provider:train_epoch(model, optim, acc, logger)
+function driver:train_epoch(model, optim, acc, logger)
 	assert(self.train)
-	local sampler = bp.make_train_sampler()
+	local sampler = self.bp:make_train_sampler()
 
 	for i = 1, self.bp.train_batches do
 		local start = sys.clock()
@@ -45,9 +45,9 @@ function epoch_provider:train_epoch(model, optim, acc, logger)
 	return acc:value()
 end
 
-function epoch_provider:test_epoch(model, optim, acc, logger)
+function driver:test_epoch(model, optim, acc, logger)
 	assert(self.test)
-	local sampler = bp.make_test_sampler()
+	local sampler = self.bp:make_test_sampler()
 
 	for i = 1, self.bp.test_batches do
 		local start = sys.clock()

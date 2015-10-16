@@ -17,5 +17,16 @@ function stdout_logger:update(resource, data)
 	elseif resource == "/console/error" then
 		assert(type(data) == "string")
 		print(os.date("[%c] Error: ") .. data)
+	elseif resource == "/history" then
+		print("Current history:")
+		print(data)
+	elseif resource == "/history/train_results" then
+		print("Train metrics:")
+		print(data)
+	elseif resource == "/history/test_results" then
+		print("Test metrics:")
+		print(data)
+	else
+		error("Invalid resource `" .. resource .. "`.")
 	end
 end

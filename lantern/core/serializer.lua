@@ -1,6 +1,7 @@
-require "os"
 require "lfs"
 require "torch"
+
+local json = require "lunajson"
 local serializer = lantern.make_class("serializer")
 
 function serializer:remove_file_if_exists(fn)
@@ -40,6 +41,18 @@ function serializer:create_hard_link(src, dst)
 	end
 end
 
+function serializer:mkdir_if_not_exists(dir)
+	if paths.dirp(dir) then return end
+
+	if not paths.mkdir(dir) then
+		self.logger:update(
+			"/console/error",
+			"Failed creating directory `" .. dir .. "`."
+		)
+		os.exit(1)
+	end
+end
+
 function serializer:restore_backup_if_exists(old, new)
 	if not paths.filep(old) then
 		return true
@@ -55,85 +68,84 @@ function serializer:restore_backup_if_exists(old, new)
 		return false
 	end
 
+	self.logger:update("/console/info", "Restoring backup `" .. old .. "`.")
 	self:rename_file_if_exists(old, new)
 	return true
 end
 
 function serializer:restore_backups()
 	local status = true
-	status = status and self:restore_backups(
-		self.cur_model_backup_fp, self.cur_model_fp)
-	status = status and self:restore_backups(
+	status = status and self:restore_backup_if_exists(
+		self.cur_model_state_backup_fp, self.cur_model_state_fp)
+	status = status and self:restore_backup_if_exists(
 		self.cur_opt_state_backup_fp, self.cur_opt_state_fp)
-	status = status and self:restore_backups(
-		self.cur_driver_state_backup_fp, self.cur_driver_state_fp)
+	status = status and self:restore_backup_if_exists(
+		self.cur_perf_history_backup_fp, self.cur_perf_history_fp)
 	
 	for k, v in pairs(self.perf_metrics) do
 		for _, mode in pairs(v) do
-			status = status and self:restore_backups(
-				self.best_model_backup_fp, self.best_model_fp)
-			status = status and self:restore_backups(
-				self.best_opt_state_backup_fp, self.best_opt_state_fp)
-			status = status and self:restore_backups(
-				self.best_driver_state_backup_fp, self.best_driver_state_fp)
+			status = status and self:restore_backup_if_exists(
+				mode.best_model_state_backup_fp, mode.best_model_state_fp)
+			status = status and self:restore_backup_if_exists(
+				mode.best_opt_state_backup_fp, mode.best_opt_state_fp)
+			status = status and self:restore_backup_if_exists(
+				mode.best_perf_history_backup_fp, mode.best_perf_history_fp)
 		end
 	end
 	return status
 end
 
-function serializer:__init(model_dir, perf_metrics)
+function serializer:__init(model_dir, perf_metrics, logger)
 	assert(type(model_dir) == "string")
-	assert(
-		paths.dirp(model_dir),
-		"The directory `" .. model_dir .. "` does not exist."
-	)
+	self:mkdir_if_not_exists(model_dir)
+	self.logger = logger or lantern.stdout_logger()
 
 	self.model_dir                  = model_dir
-	self.cur_model_fp               = paths.concat(model_dir, "model_current.t7")
+	self.cur_model_state_fp               = paths.concat(model_dir, "model_state_current.t7")
 	self.cur_opt_state_fp           = paths.concat(model_dir, "opt_state_current.t7")
-	self.cur_driver_state_fp        = paths.concat(model_dir, "driver_state_current.json")
-	self.cur_model_backup_fp        = paths.concat(model_dir, "model_current_backup.t7")
+	self.cur_perf_history_fp        = paths.concat(model_dir, "perf_history_current.json")
+	self.cur_model_state_backup_fp        = paths.concat(model_dir, "model_state_current_backup.t7")
 	self.cur_opt_state_backup_fp    = paths.concat(model_dir, "opt_state_current_backup.t7")
-	self.cur_driver_state_backup_fp = paths.concat(model_dir, "driver_state_current_backup.json")
+	self.cur_perf_history_backup_fp = paths.concat(model_dir, "perf_history_current_backup.json")
 
 	local define_file_paths = function(metric, table)
 		table.train = {}
 		table.test = {}
 	
-		table.train.best_model_fp = paths.concat(
-			model_dir, "model_best_train_" .. metric .. ".t7")
+		table.train.best_model_state_fp = paths.concat(
+			model_dir, "model_state_best_train_" .. metric .. ".t7")
 		table.train.best_opt_state_fp = paths.concat(
 			model_dir, "opt_state_best_train_" .. metric .. ".t7")
-		table.train.best_driver_state_fp = paths.concat(
-			model_dir, "driver_state_best_train_" .. metric .. ".json")
+		table.train.best_perf_history_fp = paths.concat(
+			model_dir, "perf_history_best_train_" .. metric .. ".json")
 
-		table.train.best_model_backup_fp = paths.concat(
-			model_dir, "model_best_train_" .. metric .. "_backup.t7")
+		table.train.best_model_state_backup_fp = paths.concat(
+			model_dir, "model_state_best_train_" .. metric .. "_backup.t7")
 		table.train.best_opt_state_backup_fp = paths.concat(
 			model_dir, "opt_state_best_train_" .. metric .. "_backup.t7")
-		table.train.best_driver_state_backup_fp = paths.concat(
-			model_dir, "driver_state_best_train_" .. metric .. "_backup.json")
+		table.train.best_perf_history_backup_fp = paths.concat(
+			model_dir, "perf_history_best_train_" .. metric .. "_backup.json")
 
-		table.test.best_model_fp = paths.concat(
-			model_dir, "model_best_test_" .. metric .. ".t7")
+		table.test.best_model_state_fp = paths.concat(
+			model_dir, "model_state_best_test_" .. metric .. ".t7")
 		table.test.best_opt_state_fp = paths.concat(
 			model_dir, "opt_state_best_test_" .. metric .. ".t7")
-		table.test.best_driver_state_fp = paths.concat(
-			model_dir, "driver_state_best_test_" .. metric .. ".json")
+		table.test.best_perf_history_fp = paths.concat(
+			model_dir, "perf_history_best_test_" .. metric .. ".json")
 
-		table.test.best_model_backup_fp = paths.concat(
-			model_dir, "model_best_test_" .. metric .. "_backup.t7")
+		table.test.best_model_state_backup_fp = paths.concat(
+			model_dir, "model_state_best_test_" .. metric .. "_backup.t7")
 		table.test.best_opt_state_backup_fp = paths.concat(
 			model_dir, "opt_state_best_test_" .. metric .. "_backup.t7")
-		table.test.best_driver_state_backup_fp = paths.concat(
-			model_dir, "driver_state_best_test_" .. metric .. "_backup.json")
+		table.test.best_perf_history_backup_fp = paths.concat(
+			model_dir, "perf_history_best_test_" .. metric .. "_backup.json")
 	end
 
 	self.perf_metrics = {}
 	for k, v in pairs(perf_metrics) do
 		if v ~= "not important" then
 			self.perf_metrics[k] = {}
-			define_file_paths(v, self.perf_metrics[v])
+			define_file_paths(k, self.perf_metrics[k])
 		end
 	end
 
@@ -147,100 +159,150 @@ function serializer:__init(model_dir, perf_metrics)
 	end
 end
 
-function serializer:load_state()
-	if not paths.filep(self.cur_driver_state_fp) then return end
+function serializer:get_improved_metrics(mode, hist)
+	assert(hist[#hist][mode])
 
-	local f = io.open(self.cur_driver_state_fp, 'rb')
-	local text = f:read("*all"):close()
-	return json.decode(text)
-end
+	if #hist == 1 then
+		local tmp = {}
 
-function serializer:get_improved_metrics(mode, state)
-	local prev_metrics = nil
-	local cur_metrics = state[#state][mode]
-	assert(cur_metrics)
-
-	for i = #state - 1, 1, -1 do
-		if state[i][mode] then
-			prev_metrics = state[i][mode]
-			break
-		end
-	end
-
-	local improved_metrics = {}
-	for k, _ in pairs(self.perf_metrics) do
-		improved_metrics[#improved_metrics + 1] = k
-	end
-
-	if not prev_metrics then
-		return improved_metrics
-	end
-
-	for k, v in pairs(cur_metrics) do
-		if lantern.performance_metrics[k] == "increasing" then
-			if v <= prev_metrics[k] then
-				improved_metrics[k] = nil
+		for k, v in pairs(hist[#hist][mode]) do
+			if lantern.performance_metrics[k] then
+				tmp[k] = v
 			end
-		elseif v >= prev_metrics[k] then
-			improved_metrics[k] = nil
+		end
+		return tmp
+	end
+
+	local update_metrics = function(best, cur)
+		for k, v in pairs(cur) do
+			local dir = lantern.performance_metrics[k]
+
+			if not best[k] and dir then
+				best[k] = v
+				break
+			end
+
+			if dir == "increasing" then
+				if v > best[k] then best[k] = v end
+			elseif dir == "decreasing" then
+				if v < best[k] then best[k] = v end
+			end
 		end
 	end
 
-	return improved_metrics
+	local best_metrics
+	for i = 1, #hist - 1 do
+		if hist[i][mode] then
+			best_metrics = best_metrics or {}
+			update_metrics(best_metrics, hist[i][mode])
+		end
+	end
+
+	if not best_metrics then return end
+	local improved
+
+	for k, v in pairs(hist[#hist][mode]) do
+		local dir = lantern.performance_metrics[k]
+
+		if not best_metrics[k] and dir then
+			improved = improved or {}
+			improved[k] = v
+		elseif best_metrics[k] and dir == "increasing" then
+			if v > best_metrics[k] then
+				improved = improved or {}
+				improved[k] = v
+			end
+		elseif best_metrics[k] and dir == "decreasing" then
+			if v < best_metrics[k] then
+				improved = improved or {}
+				improved[k] = v
+			end
+		end
+	end
+
+	return improved
 end
 
-function serializer:save_current_data(model, optim, state)
-	self:rename_file_if_exists(self.cur_model_fp,
-		self.cur_model_backup_fp)
+function serializer:save_current_data(model, optim, hist)
+	self:rename_file_if_exists(self.cur_model_state_fp,
+		self.cur_model_state_backup_fp)
 	self:rename_file_if_exists(self.cur_opt_state_fp,
 		self.cur_opt_state_backup_fp)
-	self:rename_file_if_exists(self.cur_driver_state_fp,
-		self.cur_driver_state_backup_fp)
+	self:rename_file_if_exists(self.cur_perf_history_fp,
+		self.cur_perf_history_backup_fp)
 
-	torch.save(self.cur_model_fp, model)
-	torch.save(self.cur_opt_state_fp, optim)
+	torch.save(self.cur_model_state_fp, model.state)
+	torch.save(self.cur_opt_state_fp, optim.state)
 
-	local str = json.encode(state)
-	local f = io.open(self.cur_driver_state_fp, 'wb')
+	local str = json.encode(hist)
+	local f = io.open(self.cur_perf_history_fp, 'wb')
 	f:write(str):close()
 
-	self:remove_file_if_exists(self.cur_model_backup_fp)
+	self:remove_file_if_exists(self.cur_model_state_backup_fp)
 	self:remove_file_if_exists(self.cur_opt_state_backup_fp)
-	self:remove_file_if_exists(self.cur_driver_state_backup_fp)
+	self:remove_file_if_exists(self.cur_perf_history_backup_fp)
+end
+
+function serializer:save_current_perf_history(hist)
+	self:rename_file_if_exists(self.cur_perf_history_fp,
+		self.cur_perf_history_backup_fp)
+
+	local str = json.encode(hist)
+	local f = io.open(self.cur_perf_history_fp, 'wb')
+	f:write(str):close()
+
+	self:remove_file_if_exists(self.cur_perf_history_backup_fp)
 end
 
 function serializer:update_hard_links(mode, metric)
-	local paths = self.perf_metrics[metrics][mode]
+	local paths = self.perf_metrics[metric][mode]
 
-	self:rename_file_if_exists(paths.best_model_fp,
-		paths.best_model_backup_fp)
+	self:rename_file_if_exists(paths.best_model_state_fp,
+		paths.best_model_state_backup_fp)
 	self:rename_file_if_exists(paths.best_opt_state_fp,
 		paths.best_opt_state_backup_fp)
-	self:rename_file_if_exists(paths.best_driver_state_fp,
-		paths.best_driver_state_backup_fp)
+	self:rename_file_if_exists(paths.best_perf_history_fp,
+		paths.best_perf_history_backup_fp)
 
-	self:create_hard_link(self.cur_model_fp, paths.best_model_fp)
+	self:create_hard_link(self.cur_model_state_fp, paths.best_model_state_fp)
 	self:create_hard_link(self.cur_opt_state_fp, paths.best_opt_state_fp)
-	self:create_hard_link(self.cur_driver_state_fp, paths.best_driver_state_fp)
+	self:create_hard_link(self.cur_perf_history_fp, paths.best_perf_history_fp)
 
-	self:remove_file_if_exists(paths.best_model_backup_fp)
+	self:remove_file_if_exists(paths.best_model_state_backup_fp)
 	self:remove_file_if_exists(paths.best_opt_state_backup_fp)
-	self:remove_file_if_exists(paths.best_driver_state_backup_fp)
+	self:remove_file_if_exists(paths.best_perf_history_backup_fp)
 end
 
-function serializer:save_train_progress(model, optim, state, logger)
-	local improved = self:get_improved_metrics("train", state)
-	self:save_current_data(model, optim, state)
+function serializer:save_train_progress(model, optim, hist, logger)
+	local improved = self:get_improved_metrics("train", hist)
+	self.logger:update("/console/info", "Saving current state.")
+	self:save_current_data(model, optim, hist)
 
-	for _, v in pairs(improved) do
-		self:update_hard_links("train", v)
+	if improved then
+		self.logger:update(
+			"/console/info",
+			"Improved metrics during training: " .. json.encode(improved) .. "."
+		)
+
+		for k, v in pairs(improved) do
+			self:update_hard_links("train", k)
+		end
 	end
 end
 
-function serializer:save_test_progress(model, optim, state, logger)
-	local improved = self:get_improved_metrics("test", state)
+function serializer:save_test_progress(model, optim, hist, logger)
+	local improved = self:get_improved_metrics("test", hist)
+	self.logger:update("/console/info", "Saving performance history.")
+	self:save_current_perf_history(hist)
 
-	for _, v in pairs(improved) do
-		self:update_hard_links("test", v)
+	if improved then
+		self.logger:update(
+			"/console/info",
+			"Improved metrics during testing: " .. json.encode(improved) .. "."
+		)
+
+		for k, v in pairs(improved) do
+			self:update_hard_links("test", k)
+		end
 	end
 end

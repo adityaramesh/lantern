@@ -75,5 +75,5 @@ end
 function accuracy:value()
 	assert(self.total > 0)
 	assert(self.total >= self.correct)
-	return self.correct / self.total
+	return {accuracy = self.correct / self.total}
 end

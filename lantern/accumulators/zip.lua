@@ -7,15 +7,25 @@ function zip:__init(accs)
 end
 
 function zip:update(outputs, loss, targets)
-	for _, v in self.accs do
+	for _, v in pairs(self.accs) do
 		v:update(outputs, loss, targets)
 	end
 end
 
 function zip:value()
 	local values = {}
-	for _, v in self.accs do
-		values[#values + 1] = v:value()
+
+	-- Each accumulator owned by this metric returns a table of key-value
+	-- pairs. We collect all of these in a single table, and output, the
+	-- result.
+	for _, v in pairs(self.accs) do
+		local output = v:value()
+		assert(type(output) == "table")
+
+		for k, v in pairs(output) do
+			assert(not values[k])
+			values[k] = v
+		end
 	end
 	return values
 end
