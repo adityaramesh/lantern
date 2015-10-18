@@ -32,11 +32,12 @@ local function validate_args(args)
 
 	if args.sampling_strategy then
 		assert(
+			args.sampling_strategy == "mixed"       or
 			args.sampling_strategy == "alternating" or
 			args.sampling_strategy == "sequential"
 		)
 	else
-		args.sampling_strategy = "alternating"
+		args.sampling_strategy = "mixed"
 	end
 
 	if not args.logger then
@@ -56,10 +57,16 @@ end
 -- * batch_size (optional): The size of the batches returned by the samplers.
 --   Default: 1.
 -- * sampling_strategy (optional): The strategy used to determine how to make
---   use of multiple training files. Supported options: "alternating" (sample
---   one instance from each file in a round-robin fashion), and "sequential"
---   (sample all instances from one file before moving on to the next). Default:
---   "alternating".
+--   use of multiple training files. Supported options are as follows. The
+--   default is "mixed".
+--   * mixed: Each batch consists of a mixture of instances sampled from the
+--     training datasets in a round-robin fashion. When we reach the end of a
+--     dataset duirng an epoch, we wrap back from the beginning.
+--   * alternating: Each batch consists only of instances from a single
+--     dataset, but we alternate between datasets while sampling. After we reach
+--     the end of a dataset during an epoch, we wrap around from the beginning.
+--   * sequential: Sample all instances from one file before moving on to the
+--     next.
 -- * shuffle (optional): Indicates whether the data in the training files should
 --   be accessed in a random order that is determined at the start of each
 --   training epoch. Default: `true`.
@@ -94,7 +101,6 @@ end
 
 function batch_provider:load_train_data()
 	self.train_data = {}
-	self.train_sizes = {}
 	self.max_train_size = 0
 	self.total_train_size = 0
 
@@ -110,14 +116,23 @@ function batch_provider:load_train_data()
 		-- sense to fail in this case.
 		assert(size > self.batch_size)
 
-		self.train_sizes[#self.train_sizes + 1] = size
+		self.train_data[#self.train_data + 1] = data
 		self.max_train_size = math.max(self.max_train_size, size)
 		self.total_train_size = self.total_train_size + size
-
-		self.train_data[#self.train_data + 1] = data
 	end
 
-	if self.sampling_strategy == "alternating" then
+	local pred = function(a, b)
+		return a.inputs:size(1) > b.inputs:size(1)
+	end
+
+	table.sort(self.train_data, pred)
+
+	self.train_sizes = {}
+	for _, data in pairs(self.train_data) do
+		self.train_sizes[#self.train_sizes + 1] = data.inputs:size(1)
+	end
+
+	if self.sampling_strategy == "mixed" then
 		-- Here's the picture used to derive this:
 		--
 		-- Dataset 1   Dataset 2   Dataset 3
@@ -128,18 +143,46 @@ function batch_provider:load_train_data()
 		-- 5 --------> 2 --------> 1
 		--
 		-- Each time we move "past the end" of a dataset, we wrap back
-		-- to the beginning. Thus the total number of instances we pass
-		-- before getting to to the last instance of the largest dataset
-		-- is the numerator of the expression below.
-		self.train_batches = math.ceil(
-			((self.max_train_size - 1) * #self.train_data + 1) /
-			self.batch_size
-		)
-	else
+		-- to the beginning. To compute the minimum number of batches
+		-- required to encounter each instance at least once, we need
+		-- to compute the number of datasets that are of maximal size.
+
+		local max_size = self.train_sizes[1]
+		local max_entries = 1
+
+		for i = 2, #self.train_sizes do
+			if self.train_sizes[i] == max_size then
+				max_entries = max_entries + 1
+			else
+				assert(self.train_sizes[i] < max_size)
+				break
+			end
+		end
+		
+		self.instances = (max_size - 1) * #self.train_data + max_entries
+		self.train_batches = math.ceil(instances / self.batch_size)
+	elseif self.sampling_strategy == "alternating" then
+		local max_batches = math.ceil(self.train_sizes[1] / self.batch_size)
+		local max_entries = 1
+
+		for i = 2, #self.train_sizes do
+			local batches = math.ceil(self.train_sizes[i] / self.batch_size)
+			if batches == max_batches then
+				max_entries = max_entries + 1
+			else
+				assert(batches < max_batches)
+				break
+			end
+		end
+		
+		self.train_batches = (max_batches - 1) * #self.train_data + max_entries
+	elseif self.sampling_strategy == "sequential" then
 		self.train_batches = math.floor(self.total_train_size / self.batch_size)
 		if self.total_train_size % self.batch_size ~= 0 then
 			self.train_batches = self.train_batches + 1
 		end
+	else
+		error("Invalid sampling strategy `" .. self.sampling_strategy .. "`.")
 	end
 end
 
@@ -195,7 +238,7 @@ function batch_provider:make_sampler(mode)
 		strategy = self.sampling_strategy
 	else
 		-- In testing mode, there's no reason to use shuffling or the
-		-- alternating sampling strategy.
+		-- mixed or alternating sampling strategy.
 
 		data     = {self.test_data}
 		shuffle  = false
@@ -213,10 +256,15 @@ function batch_provider:make_sampler(mode)
 		target_type  = self.target_type
 	}
 
-	if strategy == "alternating" then
+	if strategy == "mixed" then
+		args.instances = self.instances
+		return lantern.mixed_batch_sampler(args)
+	elseif strategy == "alternating" then
 		return lantern.alternating_batch_sampler(args)
-	else
+	elseif strategy == "sequential" then
 		return lantern.sequential_batch_sampler(args)
+	else
+		error("Invalid sampling strategy `" .. self.sampling_strategy .. "`.")
 	end
 end
 

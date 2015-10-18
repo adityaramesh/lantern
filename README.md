@@ -3,6 +3,11 @@
 Lantern makes it easy to train models in Torch and monitor real-time performance
 statistics without having to write any boilerplate code.
 
+# Agenda
+
+- Test other samplers again.
+- Test `alternating_batch_sampler`.
+
 # Future Features
 
 - "Ready-to-go" models in the namespace `lantern.models`. The layers sizes and

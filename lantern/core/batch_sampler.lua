@@ -1,5 +1,6 @@
 require "cutorch"
 
+local mixed_batch_sampler       = lantern.make_class("mixed_batch_sampler")
 local alternating_batch_sampler = lantern.make_class("alternating_batch_sampler")
 local sequential_batch_sampler  = lantern.make_class("sequential_batch_sampler")
 
@@ -54,8 +55,6 @@ local function initialize(class, args)
 	class.target_buffer = torch.Tensor(target_batch_shape):type(target_batch_type)
 
 	-- Define the data access strategy.
-	
-	class.index = 1
 	if args.shuffle then
 		class.access_strategy = lantern.shuffled_access_strategy(class.data)
 	else
@@ -63,15 +62,23 @@ local function initialize(class, args)
 	end
 end
 
-function alternating_batch_sampler:__init(args)
+function mixed_batch_sampler:__init(args)
 	initialize(self, args)
+	self.index = 1
+	self.instances = args.instances
 end
 
-function alternating_batch_sampler:next()
-	-- Note: under this scheme, all batches with have sizes equal to
-	-- precisely `batch_size`; there is no special corner case.
+function mixed_batch_sampler:next()
+	assert(self.index < self.instances)
+
+	local batch_size
+	if self.index + self.batch_size - 1 <= self.instances then
+		batch_size = self.batch_size
+	else
+		batch_size = self.instances - self.index + 1
+	end
 	
-	for i = 1, self.batch_size do
+	for i = 1, batch_size do
 		local offset = self.index + i - 1
 		local dataset = (offset - 1) % #self.data + 1
 
@@ -88,10 +95,54 @@ function alternating_batch_sampler:next()
 			self.data[dataset].targets[{{new_index}}])
 	end
 
-	self.index = self.index + self.batch_size
+	self.index = self.index + batch_size
 	return {
-		inputs = self.input_buffer,
-		targets = self.target_buffer
+		inputs = self.input_buffer[{{1, batch_size}}],
+		targets = self.target_buffer[{{1, batch_size}}]
+	}
+end
+
+function alternating_batch_sampler:__init(args)
+	initialize(self, args)
+
+	self.dataset = 1
+	self.indices = {}
+
+	for i = 1, #self.data do
+		self.indices[i] = 1
+	end
+end
+
+function alternating_batch_sampler:next()
+	assert(self.dataset <= #self.data)
+
+	local index = self.indices[self.dataset]
+	local size = self.data[self.dataset].inputs:size(1)
+	assert(index < size)
+
+	local count
+	if index + self.batch_size - 1 >= size then
+		count = size - index + 1
+		self.indices[self.dataset] = 1
+	else
+		count = self.batch_size
+	end
+
+	for i = 1, count do
+		self.input_buffer[{{i}}]:copy(
+			self.data[self.dataset].inputs[{{index + i - 1}}])
+		self.target_buffer[{{i}}]:copy(
+			self.data[self.dataset].targets[{{index + i - 1}}])
+	end
+	
+	self.dataset = self.dataset + 1
+	if self.dataset > #self.data then
+		self.dataset = 1
+	end
+
+	return {
+		inputs = self.input_buffer[{{1, count}}],
+		targets = self.target_buffer[{{1, count}}]
 	}
 end
 
@@ -107,13 +158,15 @@ function sequential_batch_sampler:__init(args)
 	self.cum_sizes = torch.totable(self.cum_sizes)
 	self.cum_sizes[0] = 0
 	
+	self.index = 1
 	self.dataset = 1
 end
 
 function sequential_batch_sampler:next()
 	assert(self.dataset <= #self.data)
+	assert(self.index < self.cum_sizes[#self.cum_sizes])
 	
-	if self.index + self.batch_size >= self.cum_sizes[self.dataset] then
+	if self.index + self.batch_size - 1 >= self.cum_sizes[self.dataset] then
 		-- Note: we assert in the constructor that the size of each
 		-- dataset is at least `batch_size + 1`. So we can cross at most
 		-- one boundary between datasets as we form a mini-batch.
@@ -147,18 +200,10 @@ function sequential_batch_sampler:next()
 
 		self.index = self.index + self.batch_size
 		self.dataset = self.dataset + 1
-
-		if count_2 > 0 then
-			return {
-				inputs = self.input_buffer,
-				targets = self.target_buffer
-			}
-		else
-			return {
-				inputs = self.input_buffer[{{1, count_1}}],
-				targets = self.target_buffer[{{1, count_1}}]
-			}
-		end
+		return {
+			inputs = self.input_buffer[{{1, count_1 + count_2}}],
+			targets = self.target_buffer[{{1, count_1 + count_2}}]
+		}
 	else
 		local base = self.index - self.cum_sizes[self.dataset - 1] - 1
 
