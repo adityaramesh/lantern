@@ -144,7 +144,8 @@ function alternating_batch_sampler:next()
 	self.batch_index = self.batch_index + 1
 	return {
 		inputs = self.input_buffer[{{1, count}}],
-		targets = self.target_buffer[{{1, count}}]
+		targets = self.target_buffer[{{1, count}}],
+		dataset = dataset
 	}
 end
 
