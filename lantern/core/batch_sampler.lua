@@ -69,7 +69,7 @@ function mixed_batch_sampler:__init(args)
 end
 
 function mixed_batch_sampler:next()
-	assert(self.index < self.instances)
+	assert(self.index <= self.instances)
 
 	local batch_size
 	if self.index + self.batch_size - 1 <= self.instances then
@@ -116,14 +116,14 @@ function alternating_batch_sampler:__init(args)
 end
 
 function alternating_batch_sampler:next()
-	assert(self.batch_index < self.batches)
+	assert(self.batch_index <= self.batches)
 
 	local dataset = (self.batch_index - 1) % #self.data + 1
 	assert(dataset <= #self.data)
 
 	local index = self.indices[dataset]
 	local size = self.data[dataset].inputs:size(1)
-	assert(index < size)
+	assert(index <= size)
 
 	local count
 	if index + self.batch_size - 1 >= size then
@@ -165,7 +165,7 @@ end
 
 function sequential_batch_sampler:next()
 	assert(self.dataset <= #self.data)
-	assert(self.index < self.cum_sizes[#self.cum_sizes])
+	assert(self.index <= self.cum_sizes[#self.cum_sizes])
 	
 	if self.index + self.batch_size - 1 >= self.cum_sizes[self.dataset] then
 		-- Note: we assert in the constructor that the size of each
