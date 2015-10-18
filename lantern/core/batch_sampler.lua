@@ -105,8 +105,10 @@ end
 function alternating_batch_sampler:__init(args)
 	initialize(self, args)
 
-	self.dataset = 1
-	self.indices = {}
+	self.dataset     = 1
+	self.batch_index = 1
+	self.batches     = args.batches
+	self.indices     = {}
 
 	for i = 1, #self.data do
 		self.indices[i] = 1
@@ -114,32 +116,31 @@ function alternating_batch_sampler:__init(args)
 end
 
 function alternating_batch_sampler:next()
-	assert(self.dataset <= #self.data)
+	assert(self.batch_index < self.batches)
 
-	local index = self.indices[self.dataset]
-	local size = self.data[self.dataset].inputs:size(1)
+	local dataset = (self.batch_index - 1) % #self.data + 1
+	assert(dataset <= #self.data)
+
+	local index = self.indices[dataset]
+	local size = self.data[dataset].inputs:size(1)
 	assert(index < size)
 
 	local count
 	if index + self.batch_size - 1 >= size then
 		count = size - index + 1
-		self.indices[self.dataset] = 1
+		self.indices[dataset] = 1
 	else
 		count = self.batch_size
 	end
 
 	for i = 1, count do
 		self.input_buffer[{{i}}]:copy(
-			self.data[self.dataset].inputs[{{index + i - 1}}])
+			self.data[dataset].inputs[{{index + i - 1}}])
 		self.target_buffer[{{i}}]:copy(
-			self.data[self.dataset].targets[{{index + i - 1}}])
+			self.data[dataset].targets[{{index + i - 1}}])
 	end
 	
-	self.dataset = self.dataset + 1
-	if self.dataset > #self.data then
-		self.dataset = 1
-	end
-
+	self.batch_index = self.batch_index + 1
 	return {
 		inputs = self.input_buffer[{{1, count}}],
 		targets = self.target_buffer[{{1, count}}]

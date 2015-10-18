@@ -160,7 +160,7 @@ function batch_provider:load_train_data()
 		end
 		
 		self.instances = (max_size - 1) * #self.train_data + max_entries
-		self.train_batches = math.ceil(instances / self.batch_size)
+		self.train_batches = math.ceil(self.instances / self.batch_size)
 	elseif self.sampling_strategy == "alternating" then
 		local max_batches = math.ceil(self.train_sizes[1] / self.batch_size)
 		local max_entries = 1
@@ -177,10 +177,7 @@ function batch_provider:load_train_data()
 		
 		self.train_batches = (max_batches - 1) * #self.train_data + max_entries
 	elseif self.sampling_strategy == "sequential" then
-		self.train_batches = math.floor(self.total_train_size / self.batch_size)
-		if self.total_train_size % self.batch_size ~= 0 then
-			self.train_batches = self.train_batches + 1
-		end
+		self.train_batches = math.ceil(self.total_train_size / self.batch_size)
 	else
 		error("Invalid sampling strategy `" .. self.sampling_strategy .. "`.")
 	end
@@ -230,12 +227,13 @@ function batch_provider:infer_properties(data)
 end
 
 function batch_provider:make_sampler(mode)
-	local data, shuffle, strategy
+	local data, shuffle, strategy, batches
 
 	if mode == "train" then
 		data     = self.train_data
 		shuffle  = self.shuffle
 		strategy = self.sampling_strategy
+		batches  = self.train_batches
 	else
 		-- In testing mode, there's no reason to use shuffling or the
 		-- mixed or alternating sampling strategy.
@@ -243,6 +241,7 @@ function batch_provider:make_sampler(mode)
 		data     = {self.test_data}
 		shuffle  = false
 		strategy = "sequential"
+		batches  = self.test_batches
 	end
 	
 	local args = {
@@ -260,6 +259,7 @@ function batch_provider:make_sampler(mode)
 		args.instances = self.instances
 		return lantern.mixed_batch_sampler(args)
 	elseif strategy == "alternating" then
+		args.batches = batches
 		return lantern.alternating_batch_sampler(args)
 	elseif strategy == "sequential" then
 		return lantern.sequential_batch_sampler(args)
