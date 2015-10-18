@@ -16,3 +16,4 @@ __pycache__
 # Ignore the data file directory.
 /data
 /models
+/temp

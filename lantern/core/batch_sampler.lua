@@ -131,6 +131,7 @@ function alternating_batch_sampler:next()
 		self.indices[dataset] = 1
 	else
 		count = self.batch_size
+		self.indices[dataset] = self.indices[dataset] + self.batch_size
 	end
 
 	for i = 1, count do

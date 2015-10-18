@@ -61,12 +61,12 @@ end
 --   default is "mixed".
 --   * mixed: Each batch consists of a mixture of instances sampled from the
 --     training datasets in a round-robin fashion. When we reach the end of a
---     dataset duirng an epoch, we wrap back from the beginning.
+--     dataset duirng an epoch, we wrap back to the beginning.
 --   * alternating: Each batch consists only of instances from a single
 --     dataset, but we alternate between datasets while sampling. After we reach
---     the end of a dataset during an epoch, we wrap around from the beginning.
---   * sequential: Sample all instances from one file before moving on to the
---     next.
+--     the end of a dataset during an epoch, we wrap back to the beginning.
+--   * sequential: Samples all instances from one file before moving on to the
+--     next. A batch may contain instances from two datasets.
 -- * shuffle (optional): Indicates whether the data in the training files should
 --   be accessed in a random order that is determined at the start of each
 --   training epoch. Default: `true`.
@@ -114,7 +114,10 @@ function batch_provider:load_train_data()
 		-- redundancy in the generated batches. The training procedure
 		-- is at the very least highly questionable. I think it makes
 		-- sense to fail in this case.
-		assert(size > self.batch_size)
+		assert(
+			size > self.batch_size,
+			"Size of dataset is less than or equal to batch size."
+		)
 
 		self.train_data[#self.train_data + 1] = data
 		self.max_train_size = math.max(self.max_train_size, size)
