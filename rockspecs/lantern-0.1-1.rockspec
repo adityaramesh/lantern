@@ -23,6 +23,5 @@ dependencies = {
 
 build = {
 	type = "builtin",
-	modules = {lantern = "init.lua"},
-	build_command = "echo 'fuck luarocks'"
+	modules = {lantern = "init.lua"}
 }
