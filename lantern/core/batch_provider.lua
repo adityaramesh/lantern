@@ -187,13 +187,9 @@ function batch_provider:load_train_data()
 end
 
 function batch_provider:load_test_data()
-	self.test_data = lantern.load(self.test_file)
-	self.test_size = self.test_data.inputs:size(1)
-
-	self.test_batches = self.test_size / self.batch_size
-	if self.test_size % self.batch_size ~= 0 then
-		self.test_batches = self.test_batches + 1
-	end
+	self.test_data    = lantern.load(self.test_file)
+	self.test_size    = self.test_data.inputs:size(1)
+	self.test_batches = math.ceil(self.test_size / self.batch_size)
 end
 
 function batch_provider:infer_properties(data)
