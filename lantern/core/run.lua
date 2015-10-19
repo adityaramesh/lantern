@@ -54,9 +54,8 @@ end
 --   trajectory.
 -- * test_epoch_ratio (optional): The number of training epochs to perform
 --   before running a test epoch. Default: 1.
--- * optim_state (optional): State optimizer used to update the model. The
---   default optimizer is `lantern.optimizers.adadelta_lm` with default
---   parameters.
+-- * optimizer (optional): Optimizer used to update the model. The default
+--   optimizer is `lantern.optimizers.adadelta_lm` with default parameters.
 -- * stop_crit (optional): Criterion used to determine when to stop training.
 --   Default: stop if there is no improvement in **any** performance metric
 --   after 10 epochs.
@@ -73,14 +72,7 @@ function lantern.run(args)
 	local perf_metrics = args.perf_metrics
 
 	-- Infer the values of the optional arguments.
-
-	local optim
-	if args.optim_state then
-		optim = lantern.optimizers[args.optim_state.name](args.optim_state)
-	else
-		optim = lantern.optimizers.adadelta_lm(model)
-	end
-
+	local optim            = args.optimizer or lantern.optimizers.adadelta_lm(model)
 	local stop_crit        = args.stop_crit or lantern.criterion.max_epochs_per_improvement(10)
 	local test_epoch_ratio = args.test_epoch_ratio or 1
 	local logger           = args.logger or lantern.stdout_logger()
