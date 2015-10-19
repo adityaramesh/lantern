@@ -23,6 +23,5 @@ dependencies = {
 
 build = {
 	type = "builtin",
-	modules = {lantern = "init.lua"},
-	copy_directories = {"lantern", "lantern/accumulators", "lantern/core", "lantern/optimize"}
+	modules = {lantern_root = "init.lua"}
 }
