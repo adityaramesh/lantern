@@ -24,5 +24,5 @@ dependencies = {
 build = {
 	type = "builtin",
 	modules = {lantern = "init.lua"},
-	copy_directories = {"accumulators", "core", "optimize", "criteria.lua"}
+	copy_directories = {"lantern/", "accumulators", "core", "optimize", "criteria.lua"}
 }
