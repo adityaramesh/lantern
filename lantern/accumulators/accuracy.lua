@@ -52,13 +52,12 @@ function accuracy:update(batch, state)
 	end
 
 	if outputs:nDimension() == 1 then
-		assert(type(targets) == "number")
-		check_target(targets)
+		check_target(targets[1])
 
 		local _, indices = torch.max(outputs, 1)
 		self.total = self.total + 1
 
-		if indices[1] == targets then
+		if indices[1] == targets[1] then
 			self.correct = self.correct + 1
 		end
 	else
