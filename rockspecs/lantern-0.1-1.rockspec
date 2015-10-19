@@ -3,7 +3,8 @@ version = "0.1-1"
 
 source = {
 	url = "git://github.com/adityaramesh/lantern",
-	tag = "master"
+	tag = "master",
+	dir = "lantern"
 }
 
 description = {
@@ -22,6 +23,5 @@ dependencies = {
 
 build = {
 	type = "builtin",
-	modules = {lantern = "init.lua"},
-	copy_directories = {"lantern"}
+	modules = {lantern = "init.lua"}
 }
