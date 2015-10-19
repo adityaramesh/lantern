@@ -22,8 +22,6 @@ dependencies = {
 }
 
 build = {
-	type = "command",
-	copy_directories = {"lantern"}
-	--modules = {lantern = "init.lua"},
-	--install_command = "pwd > /home/aditya/TEMP"
+	type = "builtin",
+	modules = {lantern = "init.lua"}
 }
