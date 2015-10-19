@@ -3,8 +3,7 @@ version = "0.1-1"
 
 source = {
 	url = "git://github.com/adityaramesh/lantern",
-	tag = "master",
-	dir = "lantern"
+	tag = "master"
 }
 
 description = {
