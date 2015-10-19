@@ -18,7 +18,7 @@ dependencies = {
 	"xlua >= 1.0",
 	"hdf5 >= 0.0"
 }
---build = {
---	type = "builtin",
---	modules = {["lantern"] = "init.lua"}
---}
+
+build = {
+	type = "builtin",
+}
