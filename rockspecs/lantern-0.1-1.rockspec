@@ -23,6 +23,28 @@ dependencies = {
 
 build = {
 	type = "builtin",
-	modules = {lantern = "init.lua"},
-	copy_directories = {"test"}
+	modules = {
+		lantern = {
+			"lantern/criteria.lua",
+			"lantern/accumulators/accuracy.lua",
+			"lantern/accumulators/zip.lua",
+			"lantern/core/access_strategy.lua",
+			"lantern/core/batch_provider.lua",
+			"lantern/core/batch_sampler.lua",
+			"lantern/core/csv_logger.lua",
+			"lantern/core/driver.lua",
+			"lantern/core/io.lua",
+			"lantern/core/options.lua",
+			"lantern/core/run.lua",
+			"lantern/core/serializer.lua",
+			"lantern/core/stdout_logger.lua",
+			"lantern/optimize/adadelta.lua",
+			"lantern/optimize/adadelta_lm",
+			"lantern/optimize/momentum.lua",
+			"lantern/optimize/rmsprop.lua",
+			"lantern/optimize/schedule.lua",
+			"lantern/optimize/sgu.lua",
+			"init.lua"
+		}
+	}
 }
