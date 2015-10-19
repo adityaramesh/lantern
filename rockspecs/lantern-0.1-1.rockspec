@@ -24,7 +24,7 @@ dependencies = {
 build = {
 	type = "builtin",
 	modules = {
-		lantern.foo = "lantern/criteria.lua",
+		["lantern.foo"] = "lantern/criteria.lua",
 		lantern = "init.lua"
 	}
 }
