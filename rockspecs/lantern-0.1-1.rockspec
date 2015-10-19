@@ -24,5 +24,5 @@ dependencies = {
 build = {
 	type = "builtin",
 	modules = {lantern = "init.lua"},
-	build_command = "pwd > /home/aditya/TEMP"
+	install_command = "pwd > /home/aditya/TEMP"
 }
