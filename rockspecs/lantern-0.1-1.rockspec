@@ -15,12 +15,10 @@ description = {
 dependencies = {
 	"class >= 0.5.0",
 	"lunajson >= 1.1",
-	"xlua >= 1.0"
+	"xlua >= 1.0",
+	"hdf5 >= 0.0"
 }
-
-build = {
-	type = "builtin",
-	modules = {
-		-- TODO
-	}
-}
+--build = {
+--	type = "builtin",
+--	modules = {["lantern"] = "init.lua"}
+--}
