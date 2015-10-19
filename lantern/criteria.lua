@@ -89,7 +89,7 @@ function lantern.criterion.max_epochs(epochs)
 
 	return function(hist)
 		assert(hist[#hist].train or hist[#hist].test)
-		if #hist <= epochs then return true end
+		if #hist <= epochs - 1 then return true end
 		return false
 	end
 end
