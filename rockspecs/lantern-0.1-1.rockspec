@@ -4,6 +4,7 @@ version = "0.1-1"
 source = {
 	url = "git://github.com/adityaramesh/lantern",
 	tag = "master"
+	dir = "lantern"
 }
 
 description = {
@@ -14,9 +15,10 @@ description = {
 
 dependencies = {
 	"class >= 0.5.0",
-	"lunajson >= 1.1",
+	"torch >= 7.0",
 	"xlua >= 1.0",
-	"hdf5 >= 0.0"
+	"hdf5 >= 0.0",
+	"lunajson >= 1.1"
 }
 
 build = {
