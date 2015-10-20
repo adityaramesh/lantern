@@ -10,6 +10,7 @@ function accuracy:__init(classes)
 		"classification, use the indices one and two."
 	)
 
+	self.name    = "accuracy"
 	self.classes = classes
 	self.correct = 0
 	self.total   = 0

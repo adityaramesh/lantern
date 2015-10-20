@@ -27,13 +27,6 @@ local function validate_args(args)
 		end
 		args.perf_metrics = tmp
 	end
-
-	for k, _ in pairs(args.perf_metrics) do
-		assert(
-			lantern.performance_metrics[k],
-			"Unrecognized metric `" .. k .. "`."
-		)
-	end
 end
 
 --
@@ -81,16 +74,20 @@ function lantern.run(args)
 	assert(#hist >= 1)
 	logger:update("/history", hist)
 
-	local make_accumulator = function()
+	local make_accumulator = function(mode)
+		assert(mode == "train" or mode == "test")
 		local accs = {}
+
 		for k, _ in pairs(perf_metrics) do
 			if k == "accuracy" then
 				assert(#model:output_shape() == 1)
 				accs[#accs + 1] = lantern.accumulators.accuracy(
 					model:output_shape()[1])
 			elseif k == "gradient_norm" then
-				accs[#accs + 1] = lantern.accumulators.gradient_norm(
-					model)
+				if mode == "train" then
+					accs[#accs + 1] = lantern.accumulators.gradient_norm(
+						model)
+				end
 			else
 				error("Unrecognized metric `" .. k .. "`.")
 			end
@@ -106,19 +103,19 @@ function lantern.run(args)
 	end
 
 	local train_func = function()
-		return driver:train_epoch(model, optim, make_accumulator(), logger)
+		return driver:train_epoch(model, optim, make_accumulator("train"), logger)
 	end
 
 	local test_func = function()
-		return driver:test_epoch(model, optim, make_accumulator(), logger)
+		return driver:test_epoch(model, optim, make_accumulator("test"), logger)
 	end
 
 	if driver.train then
 		if (hist[#hist].train or hist[#hist].test) and not stop_crit(hist) then
 			logger:update("/console/info", "Stopping criterion satisfied.")
 			return
-		elseif (not cur_entry.train or hist[#hist].train) and
-			(not cur_entry.test or hist[#hist].test) then
+		elseif (not driver.train or hist[#hist].train) and
+			(not driver.test or hist[#hist].test) then
 			local cur_epoch = #hist
 			hist[cur_epoch + 1] = {epoch = cur_epoch + 1}
 		end
