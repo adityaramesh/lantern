@@ -45,6 +45,7 @@ lantern.performance_metrics             = {}
 lantern.performance_metrics["accuracy"] = "increasing"
 
 require "lantern/accumulators/accuracy"
+require "lantern/accumulators/gradient_norm"
 require "lantern/accumulators/zip"
 
 lantern.criterion = {}

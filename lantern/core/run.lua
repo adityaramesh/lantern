@@ -88,6 +88,9 @@ function lantern.run(args)
 				assert(#model:output_shape() == 1)
 				accs[#accs + 1] = lantern.accumulators.accuracy(
 					model:output_shape()[1])
+			elseif k == "gradient_norm" then
+				accs[#accs + 1] = lantern.accumulators.gradient_norm(
+					model)
 			else
 				error("Unrecognized metric `" .. k .. "`.")
 			end
@@ -114,7 +117,8 @@ function lantern.run(args)
 		if (hist[#hist].train or hist[#hist].test) and not stop_crit(hist) then
 			logger:update("/console/info", "Stopping criterion satisfied.")
 			return
-		elseif hist[#hist].train and hist[#hist].test then
+		elseif (not cur_entry.train or hist[#hist].train) and
+			(not cur_entry.test or hist[#hist].test) then
 			local cur_epoch = #hist
 			hist[cur_epoch + 1] = {epoch = cur_epoch + 1}
 		end
