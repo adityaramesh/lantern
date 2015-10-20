@@ -81,12 +81,12 @@ function lantern.run(args)
 		for k, _ in pairs(perf_metrics) do
 			if k == "accuracy" then
 				assert(#model:output_shape() == 1)
-				accs[#accs + 1] = lantern.accumulators.accuracy(
-					model:output_shape()[1])
+				accs[#accs + 1] = lantern.accumulators.
+					accuracy(model:output_shape()[1])
 			elseif k == "gradient_norm" then
 				if mode == "train" then
-					accs[#accs + 1] = lantern.accumulators.gradient_norm(
-						model)
+					accs[#accs + 1] = lantern.accumulators.
+						gradient_norm(model)
 				end
 			else
 				error("Unrecognized metric `" .. k .. "`.")
