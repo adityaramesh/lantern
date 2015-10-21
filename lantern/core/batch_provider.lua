@@ -109,13 +109,13 @@ function batch_provider:load_train_data()
 		local size = data.inputs:size(1)
 		assert(size == data.targets:size(1))
 
-		-- If the batch size is greater than or equal to the size of one
-		-- of the data sets, then there will be a huge amount of
-		-- redundancy in the generated batches. The training procedure
-		-- is at the very least highly questionable. I think it makes
-		-- sense to fail in this case.
+		-- If the batch size is greater than the size of one of the data
+		-- sets, then there will be a huge amount of redundancy in the
+		-- generated batches. The training procedure is at the very
+		-- least highly questionable. I think it makes sense to fail in
+		-- this case.
 		assert(
-			size > self.batch_size,
+			size >= self.batch_size,
 			"Size of dataset is less than or equal to batch size."
 		)
 

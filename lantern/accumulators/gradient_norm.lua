@@ -16,9 +16,18 @@ function gradient_norm:value()
 	assert(#self.entries > 0)
 
 	local temp = torch.Tensor(self.entries)
+
+	local std
+	if temp:size(1) > 1 then
+		std = temp:std()
+	else
+		-- If we call `:std()` in this case, we will get NaN.
+		std = 0
+	end
+
 	return {
 		mean = temp:mean(),
-		std  = temp:std(),
+		std  = std,
 		max  = temp:max(),
 		min  = temp:min()
 	}

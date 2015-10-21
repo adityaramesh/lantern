@@ -74,6 +74,7 @@ function lantern.run(args)
 	assert(#hist >= 1)
 	logger:update("/history", hist)
 
+	-- Possibly refactor this as an external functionl later.
 	local make_accumulator = function(mode)
 		assert(mode == "train" or mode == "test")
 		local accs = {}
