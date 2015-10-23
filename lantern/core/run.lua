@@ -111,6 +111,24 @@ function lantern.run(args)
 		return driver:test_epoch(model, optim, make_accumulator("test"), logger)
 	end
 
+	local log_best_metrics = function()
+		if driver.train then
+			local train = lantern.best_metrics(hist, "train")
+			logger:update(
+				"/console/info",
+				"Best training metrics: " .. json.encode(train) .. "."
+			)
+		end
+
+		if driver.test then
+			local train = lantern.best_metrics(hist, "test")
+			logger:update(
+				"/console/info",
+				"Best testing metrics: " .. json.encode(test) .. "."
+			)
+		end
+	end
+
 	if driver.train then
 		if (hist[#hist].train or hist[#hist].test) and not stop_crit(hist) then
 			logger:update("/console/info", "Stopping criterion satisfied.")
@@ -148,6 +166,7 @@ function lantern.run(args)
 
 			if not stop_crit(hist) then
 				logger:update("/console/info", "Stopping criterion satisfied.")
+				log_best_metrics()
 				return
 			end
 
