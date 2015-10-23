@@ -22,7 +22,14 @@ function lantern.improved_metrics(old, new)
 end
 
 function lantern.improvement_made(old, new)
-	return #lantern.improved_metrics(old, new) > 0
+	local improved = lantern.improved_metrics(old, new)
+	local count = 0
+
+	for k, v in pairs(improved) do
+		count = count + 1
+	end
+
+	return count
 end
 
 function lantern.best_metrics(hist, mode, epochs)
