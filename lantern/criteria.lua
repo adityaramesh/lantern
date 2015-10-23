@@ -58,7 +58,7 @@ end
 -- stopping criterion is designed to be conservative, and may not be appropriate
 -- when training large numbers of models.
 --
-function lantern.criterion.max_epochs_per_improvement(epochs)
+function lantern.criterion.max_epochs_per_test_improvement(epochs)
 	assert(epochs > 0)
 
 	return function(hist)
