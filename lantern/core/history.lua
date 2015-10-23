@@ -10,11 +10,11 @@ function lantern.improved_metrics(old, new)
 		local dir = lantern.performance_metrics[k]
 
 		if not new[k] and dir then
-			improved[k] = v
+			improved[k] = new[k]
 		elseif new[k] and dir == "increasing" then
-			if v > old[k] then improved[k] = v end
+			if v > old[k] then improved[k] = new[k] end
 		elseif new[k] and dir == "decreasing" then
-			if v < old[k] then improved[k] = v end
+			if v < old[k] then improved[k] = new[k] end
 		end
 	end
 
