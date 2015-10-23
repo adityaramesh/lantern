@@ -161,14 +161,20 @@ end
 
 function serializer:get_improved_metrics(mode, hist)
 	assert(hist[#hist][mode])
-	if #hist == 1 then return lantern.best_metrics(hist, mode, 1) end
+        if #hist == 1 then return lantern.best_metrics(hist, mode, 1) end
 
-	local best_metrics = lantern.best_metrics(hist, mode, #hist - 1)
-	if #best_metrics == 0 then return end
+        local size = function(table)
+                local count = 0
+                for k, v in pairs(table) do count = count + 1 end
+                return count
+        end
 
-	local improved = lantern.improved_metrics(best_metrics, hist[#hist][mode])
-	if #improved == 0 then return end
-	return improved
+        local best_metrics = lantern.best_metrics(hist, mode, #hist - 1)
+        if size(best_metrics) == 0 then return end
+
+        local improved = lantern.improved_metrics(best_metrics, hist[#hist][mode])
+        if size(improved) == 0 then return end
+        return improved
 end 
 
 function serializer:save_current_data(model, optim, hist)
