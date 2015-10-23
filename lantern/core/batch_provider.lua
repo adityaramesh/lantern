@@ -1,6 +1,6 @@
 --
 -- The `batch_provider` class is used to generate objects that can be used
--- sample from one or more data sources during training or testing.
+-- to sample from one or more data sources during training or testing.
 --
 
 local batch_provider = lantern.make_class("batch_provider")
@@ -207,7 +207,7 @@ function batch_provider:infer_properties(data)
 	if self.target_type == "torch.DoubleTensor" and self.target == "gpu" then
 		self.logger:update(
 			"/console/warning", 
-			"Input type is double-precision, but will be truncated " ..
+			"Target type is double-precision, but will be truncated " ..
 			"to single-precision after being transferred to the GPU."
 		)
 	end
