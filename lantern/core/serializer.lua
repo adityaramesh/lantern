@@ -161,67 +161,15 @@ end
 
 function serializer:get_improved_metrics(mode, hist)
 	assert(hist[#hist][mode])
+	if #hist == 1 then return hist[1] end
 
-	if #hist == 1 then
-		local tmp = {}
+	local best_metrics = lantern.best_metrics(hist, mode, #hist - 1)
+	if #best_metrics == 0 then return end
 
-		for k, v in pairs(hist[#hist][mode]) do
-			if lantern.performance_metrics[k] then
-				tmp[k] = v
-			end
-		end
-		return tmp
-	end
-
-	local update_metrics = function(best, cur)
-		for k, v in pairs(cur) do
-			local dir = lantern.performance_metrics[k]
-
-			if not best[k] and dir then
-				best[k] = v
-				break
-			end
-
-			if dir == "increasing" then
-				if v > best[k] then best[k] = v end
-			elseif dir == "decreasing" then
-				if v < best[k] then best[k] = v end
-			end
-		end
-	end
-
-	local best_metrics
-	for i = 1, #hist - 1 do
-		if hist[i][mode] then
-			best_metrics = best_metrics or {}
-			update_metrics(best_metrics, hist[i][mode])
-		end
-	end
-
-	if not best_metrics then return end
-	local improved
-
-	for k, v in pairs(hist[#hist][mode]) do
-		local dir = lantern.performance_metrics[k]
-
-		if not best_metrics[k] and dir then
-			improved = improved or {}
-			improved[k] = v
-		elseif best_metrics[k] and dir == "increasing" then
-			if v > best_metrics[k] then
-				improved = improved or {}
-				improved[k] = v
-			end
-		elseif best_metrics[k] and dir == "decreasing" then
-			if v < best_metrics[k] then
-				improved = improved or {}
-				improved[k] = v
-			end
-		end
-	end
-
+	local improved = lantern.improved_metrics(best_metrics, hist[#hist][mode])
+	if #improved == 0 then return end
 	return improved
-end
+end 
 
 function serializer:save_current_data(model, optim, hist)
 	self:rename_file_if_exists(self.cur_model_state_fp,

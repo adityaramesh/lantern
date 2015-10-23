@@ -11,17 +11,6 @@
 function lantern.criterion.max_epochs_per_improvement(epochs)
 	assert(epochs > 0)
 
-	local function improvement_made(old, new)
-		for k, v in pairs(new) do
-			if lantern.performance_metrics[k] == "increasing" then
-				if v > old[k] then return true end
-			elseif lantern.performance_metrics[k] == "decreasing" then
-				if v < old[k] then return true end
-			end
-		end
-		return false
-	end
-
 	return function(hist)
 		assert(hist[#hist].train or hist[#hist].test)
 
@@ -31,46 +20,23 @@ function lantern.criterion.max_epochs_per_improvement(epochs)
 		-- insufficient data.
 		if #hist <= epochs then return true end
 
-		local update_metrics = function(best, cur)
-			for k, v in pairs(cur) do
-				local dir = lantern.performance_metrics[k]
+		local best_metrics = {
+			train = lantern.best_metrics(hist, "train", #hist - epochs),
+			test = lantern.best_metrics(hist, "test", #hist - epochs)
+		}
 
-				if not best[k] and dir then
-					best[k] = v
-					break
-				end
-
-				if dir == "increasing" then
-					if v > best[k] then best[k] = v end
-				elseif dir == "decreasing" then
-					if v < best[k] then best[k] = v end
-				end
-			end
-		end
-
-		local best_metrics = {}
-
-		for i = 1, #hist - epochs do
-			if hist[i].train then
-				best_metrics.train = best_metrics.train or {}
-				update_metrics(best_metrics.train, hist[i].train)
-			end
-
-			if hist[i].test then
-				best_metrics.test = best_metrics.test or {}
-				update_metrics(best_metrics.test, hist[i].test)
-			end
-		end
+		if #best_metrics.train == 0 then best_metrics.train = nil end
+		if #best_metrics.test == 0 then best_metrics.test = nil end
 
 		for i = #hist - epochs + 1, #hist do
 			if best_metrics.train and hist[i].train then
-				if improvement_made(best_metrics.train, hist[i].train) then
+				if lantern.improvement_made(best_metrics.train, hist[i].train) then
 					return true
 				end
 			end
 
 			if best_metrics.test and hist[i].test then
-				if improvement_made(best_metrics.test, hist[i].test) then
+				if lantern.improvement_made(best_metrics.test, hist[i].test) then
 					return true
 				end
 			end
