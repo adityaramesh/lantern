@@ -123,7 +123,7 @@ function lantern.run(args)
 		end
 
 		if driver.test then
-			local train = lantern.best_metrics(hist, "test")
+			local test = lantern.best_metrics(hist, "test")
 			logger:update(
 				"/console/info",
 				"Best testing metrics: " .. json.encode(test) .. "."
