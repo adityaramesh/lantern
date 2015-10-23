@@ -29,6 +29,6 @@ build = {
 	build_command = [[
 		rm -rf $(PREFIX)/../../../../../share/lua/5.1/lantern;
 		mkdir $(PREFIX)/../../../../../share/lua/5.1/lantern;
-		cp -R init.lua lantern/* $(PREFIX)/../../../../../share/lua/5.1/lantern;
+		cp -R init.lua lantern/* $(PREFIX)/../../../../../share/lua/5.1/lantern
 	]]
 }
