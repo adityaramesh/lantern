@@ -24,10 +24,8 @@ dependencies = {
 build = {
 	type = "command",
 	build_command = [[
-		echo $(PREFIX);
-		echo $(LUADIR);
-		echo $(LIBDIR);
-		echo $(BINDIR);
-		echo $(CONFDIR)
+		mkdir -p $(PREFIX)/../../../../../share/lua/5.1/lantern;
+		cp init.lua $(PREFIX)/../../../../../share/lua/5.1/lantern;
+		cp -R lantern $(PREFIX)/../../../../../share/lua/5.1/lantern
 	]]
 }
