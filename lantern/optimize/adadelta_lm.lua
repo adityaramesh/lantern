@@ -24,7 +24,7 @@ function adadelta_lm:__init(model, state)
 	self.mom_type   = self.state.momentum_type or lantern.momentum.none
 end
 
-function adadelta_lm:update(input, target)
+function adadelta_lm:update(batch)
 	local iter = self.state.iter
 	self.state.iter = self.state.iter + 1
 
@@ -51,7 +51,7 @@ function adadelta_lm:update(input, target)
 	end
 
 	if self.mom_type == lantern.momentum.none then
-		local state = self.model:evaluate(input, target)
+		local state = self.model:evaluate(batch)
 		self.state.temp:pow(self.grad_params, 2)
 		self.state.grad_mom_2:mul(cur_decay):add(1 - cur_decay, self.state.temp)
 
@@ -83,7 +83,7 @@ function adadelta_lm:update(input, target)
 		-- Evaluate the function at the trial point.
 		self.state.step:mul(cur_mom)
 		self.params:add(self.state.step)
-		local state = self.model:evaluate(input, target)
+		local state = self.model:evaluate(batch)
 
 		self.state.temp:pow(self.grad_params, 2)
 		self.state.grad_mom_2:mul(cur_decay):add(1 - cur_decay, self.state.temp)

@@ -35,7 +35,7 @@ end
 --
 -- Log function for AdaDelta without NAG.
 --
-function adadelta:log_info(input, target, cur_lr, loss)
+function adadelta:log_info(batch, cur_lr, loss)
 	if not self.logger then return end
 
 	if not self.prev_grad_params then
@@ -48,7 +48,7 @@ function adadelta:log_info(input, target, cur_lr, loss)
 	local theta = math.acos(descent / (self.state.temp_1:norm() * norm_grad))
 
 	self.prev_grad_params:copy(self.grad_params)
-	local new_loss = self.model:evaluate(input, target)
+	local new_loss = self.model:evaluate(batch)
 	local eta_a = (new_loss - loss) / descent
 	local eta_w = math.abs(self.state.temp_1:dot(self.grad_params) / descent)
 
@@ -63,7 +63,7 @@ end
 -- Log function for AdaDelta with NAG. Currently the implementation is exactly
 -- the same as the one in `sgu.lua`.
 --
-function adadelta:log_nag_info(input, target, cur_lr, loss)
+function adadelta:log_nag_info(batch, cur_lr, loss)
 	if not self.logger then return end
 	assert(self.state.prev_params ~= nil)
 	assert(self.state.prev_grad_params ~= nil)
@@ -81,7 +81,7 @@ function adadelta:log_nag_info(input, target, cur_lr, loss)
 	-- computed in single precision.
 	local theta = math.acos(proj / (self.state.step:norm() * norm_grad))
 
-	local new_loss = self.model:evaluate(input, target)
+	local new_loss = self.model:evaluate(batch)
 	local eta_a = cur_lr * (new_loss - loss) / proj
 	local eta_w = math.abs(self.state.step:dot(self.grad_params) / proj)
 
@@ -92,7 +92,7 @@ function adadelta:log_nag_info(input, target, cur_lr, loss)
 	self.logger:log_value("eta_w", eta_w)
 end
 
-function adadelta:update(input, target)
+function adadelta:update(batch)
 	local iter = self.state.iter
 	self.state.iter = self.state.iter + 1
 
@@ -121,7 +121,7 @@ function adadelta:update(input, target)
 	end
 
 	if self.mom_type == lantern.momentum.none then
-		local state = self.model:evaluate(input, target)
+		local state = self.model:evaluate(batch)
 
 		-- Note: we could make the implementation below faster by only
 		-- only one temporary buffer instead of two, but this would
@@ -145,7 +145,7 @@ function adadelta:update(input, target)
 		-- needs the value of the update.
 		self.state.temp_2:pow(self.state.temp_1, 2)
 		self.state.update_mom_2:mul(cur_decay):add(1 - cur_decay, self.state.temp_2)
-		self:log_info(input, target, cur_lr, loss)
+		self:log_info(batch, cur_lr, loss)
 
 		return state
 	elseif self.mom_type == lantern.momentum.nag then
@@ -165,7 +165,7 @@ function adadelta:update(input, target)
 		-- Evaluate the function at the trial point.
 		self.state.step:mul(cur_mom)
 		self.params:add(self.state.step)
-		local state = self.model:evaluate(input, target)
+		local state = self.model:evaluate(batch)
 
 		self.state.temp_2:pow(self.grad_params, 2)
 		self.state.grad_mom_2:mul(cur_decay):add(1 - cur_decay, self.state.temp_2)
@@ -182,9 +182,9 @@ function adadelta:update(input, target)
 		self.state.update_mom_2:mul(cur_decay):add(1 - cur_decay, self.state.temp_1)
 
 		if self.logger then
-			self:log_nag_info(input, target, cur_lr, loss)
+			self:log_nag_info(batch, cur_lr, loss)
 			self.state.prev_params:copy(self.params)
-			self.model:evaluate(input, target)
+			self.model:evaluate(batch)
 			self.state.prev_grad_params:copy(self.grad_params)
 		end
 

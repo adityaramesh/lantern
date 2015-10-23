@@ -28,7 +28,7 @@ end
 --
 -- Log function for RMSProp without NAG.
 --
-function rmsprop:log_info(input, target, cur_lr, loss)
+function rmsprop:log_info(batch, cur_lr, loss)
 	if not self.logger then return end
 
 	if not self.prev_grad_params then
@@ -44,7 +44,7 @@ function rmsprop:log_info(input, target, cur_lr, loss)
 	local theta = math.acos(proj / (self.state.temp:norm() * norm_grad))
 
 	self.prev_grad_params:copy(self.grad_params)
-	local new_loss = self.model:evaluate(input, target)
+	local new_loss = self.model:evaluate(batch)
 	local eta_a = cur_lr * (new_loss - loss) / proj
 	local eta_w = math.abs(-self.state.temp:dot(self.grad_params) / proj)
 
@@ -59,7 +59,7 @@ end
 -- Log function for RMSProp with NAG. Currently the implementation is exactly
 -- the same as the one in `sgu.lua`.
 --
-function rmsprop:log_nag_info(input, target, cur_lr, loss)
+function rmsprop:log_nag_info(batch, cur_lr, loss)
 	if not self.logger then return end
 	assert(self.state.prev_params ~= nil)
 	assert(self.state.prev_grad_params ~= nil)
@@ -77,7 +77,7 @@ function rmsprop:log_nag_info(input, target, cur_lr, loss)
 	-- computed in single precision.
 	local theta = math.acos(proj / (self.state.step:norm() * norm_grad))
 
-	local new_loss = self.model:evaluate(input, target)
+	local new_loss = self.model:evaluate(batch)
 	local eta_a = cur_lr * (new_loss - loss) / proj
 	local eta_w = math.abs(self.state.step:dot(self.grad_params) / proj)
 
@@ -88,7 +88,7 @@ function rmsprop:log_nag_info(input, target, cur_lr, loss)
 	self.logger:log_value("eta_w", eta_w)
 end
 
-function rmsprop:update(input, target)
+function rmsprop:update(batch)
 	local iter = self.state.iter
 	self.state.iter = self.state.iter + 1
 
@@ -112,7 +112,7 @@ function rmsprop:update(input, target)
 	end
 
 	if self.mom_type == lantern.momentum.none then
-		local state = self.model:evaluate(input, target)
+		local state = self.model:evaluate(batch)
 
 		-- Update the estimate of the second moment of the gradient.
 		self.state.temp:pow(self.grad_params, 2)
@@ -120,7 +120,7 @@ function rmsprop:update(input, target)
 		self.state.temp:add(self.state.grad_mom_2, self.eps):sqrt()
 
 		self.params:addcdiv(-cur_lr, self.grad_params, self.state.temp)
-		self:log_info(input, target, cur_lr, loss)
+		self:log_info(batch, cur_lr, loss)
 
 		return state
 	elseif self.mom_type == lantern.momentum.nag then
@@ -140,7 +140,7 @@ function rmsprop:update(input, target)
 		-- Evaluate the function at the trial point.
 		self.state.step:mul(cur_mom)
 		self.params:add(self.state.step)
-		local state = self.model:evaluate(input, target)
+		local state = self.model:evaluate(batch)
 
 		-- Update the estimate of the second moment of the gradient.
 		self.state.temp:pow(self.grad_params, 2)
@@ -153,9 +153,9 @@ function rmsprop:update(input, target)
 		self.params:add(self.state.temp)
 
 		if self.logger then
-			self:log_nag_info(input, target, cur_lr, loss)
+			self:log_nag_info(batch, cur_lr, loss)
 			self.state.prev_params:copy(self.params)
-			self.model:evaluate(input, target)
+			self.model:evaluate(batch)
 			self.state.prev_grad_params:copy(self.grad_params)
 		end
 
