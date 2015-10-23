@@ -1,3 +1,5 @@
+local json = require "lunajson"
+
 --
 -- This file provides a convenience high-level function called `run`, for
 -- training or evaluating a model on a given task. The user can invoke this
