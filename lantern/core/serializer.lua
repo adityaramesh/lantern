@@ -161,7 +161,7 @@ end
 
 function serializer:get_improved_metrics(mode, hist)
 	assert(hist[#hist][mode])
-	if #hist == 1 then return hist[1] end
+	if #hist == 1 then return hist[1][mode] end
 
 	local best_metrics = lantern.best_metrics(hist, mode, #hist - 1)
 	if #best_metrics == 0 then return end
