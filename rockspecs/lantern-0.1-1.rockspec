@@ -24,7 +24,7 @@ dependencies = {
 build = {
 	type = "command",
 	build_command = [[
-		cp init.lua $PREFIX/init.lua;
-		cp -R lantern $PREFIX
+		cp init.lua $(PREFIX)/init.lua;
+		cp -R lantern $(PREFIX)
 	]]
 }
