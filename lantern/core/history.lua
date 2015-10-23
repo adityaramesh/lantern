@@ -29,7 +29,7 @@ function lantern.improvement_made(old, new)
 		count = count + 1
 	end
 
-	return count
+	return count > 0
 end
 
 function lantern.best_metrics(hist, mode, epochs)
