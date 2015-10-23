@@ -23,9 +23,12 @@ dependencies = {
 
 build = {
 	type = "command",
+
+	-- Please tell me if you know a better way to perform the
+	-- installation...
 	build_command = [[
-		mkdir -p $(PREFIX)/../../../../../share/lua/5.1/lantern;
-		cp init.lua $(PREFIX)/../../../../../share/lua/5.1/lantern;
-		cp -R lantern $(PREFIX)/../../../../../share/lua/5.1/lantern
+		rm -rf $(PREFIX)/../../../../../share/lua/5.1/lantern;
+		mkdir $(PREFIX)/../../../../../share/lua/5.1/lantern;
+		cp -R init.lua lantern/* $(PREFIX)/../../../../../share/lua/5.1/lantern;
 	]]
 }
