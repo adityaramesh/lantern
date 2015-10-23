@@ -41,13 +41,9 @@ function lantern.criterion.max_epochs_per_improvement(epochs)
 				end
 
 				if dir == "increasing" then
-					if v > best[k] then
-						best[k] = v
-					end
+					if v > best[k] then best[k] = v end
 				elseif dir == "decreasing" then
-					if v < best[k] then
-						best[k] = v
-					end
+					if v < best[k] then best[k] = v end
 				end
 			end
 		end

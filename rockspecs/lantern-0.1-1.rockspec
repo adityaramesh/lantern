@@ -22,6 +22,8 @@ dependencies = {
 }
 
 build = {
-	type = "builtin",
-	modules = {lantern = "init.lua"}
+	type = "command",
+	build_command = [[
+		cat "this is a test" ~/test.txt
+	]]
 }
