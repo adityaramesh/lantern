@@ -24,6 +24,7 @@ dependencies = {
 build = {
 	type = "command",
 	build_command = [[
-		cat "this is a test" ~/test.txt
+		cp init.lua $PREFIX/init.lua;
+		cp -R lantern $PREFIX
 	]]
 }
