@@ -24,7 +24,6 @@ dependencies = {
 build = {
 	type = "command",
 	build_command = [[
-		echo $(SHAREDIR);
-		(env)
+		echo $(LUA_PATH)
 	]]
 }
