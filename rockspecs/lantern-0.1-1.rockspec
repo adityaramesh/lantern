@@ -22,13 +22,7 @@ dependencies = {
 }
 
 build = {
-	type = "command",
-	--build_command = [[
-	--	cp init.lua $(PREFIX)/init.lua;
-	--	cp -R lantern $(PREFIX)
-	--]]
-	build_command = [[
-		echo $(PREFIX);
-		echo $(LUADIR)
-	]]
+	type = "builtin",
+	modules = {lantern = "init.lua"},
+	copy_directories = "lantern"
 }
