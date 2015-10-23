@@ -24,6 +24,10 @@ dependencies = {
 build = {
 	type = "command",
 	build_command = [[
-		echo $(LUA_PATH)
+		echo $(PREFIX);
+		echo $(LUADIR);
+		echo $(LIBDIR);
+		echo $(BINDIR);
+		echo $(CONFDIR)
 	]]
 }
