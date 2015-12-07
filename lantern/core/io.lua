@@ -1,3 +1,7 @@
+--
+-- Provides a uniform interface for loading data sets from T7 and HDF5 files.
+--
+
 require "hdf5"
 require "torch"
 
