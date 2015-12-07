@@ -1,3 +1,7 @@
+--
+-- Used to specify the way in which instances of a given data set are accessed.
+--
+
 require "torch"
 local shuffled_access_strategy = lantern.make_class("shuffled_access_strategy")
 local linear_access_strategy   = lantern.make_class("linear_access_strategy")
