@@ -1,3 +1,8 @@
+--
+-- Implements the functions to serialize the model and optimizer state, as well
+-- as the performance history.
+--
+
 require "lfs"
 require "torch"
 
