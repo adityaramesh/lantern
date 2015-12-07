@@ -101,10 +101,10 @@ function serializer:__init(model_dir, perf_metrics, logger)
 	self.logger = logger or lantern.stdout_logger()
 
 	self.model_dir                  = model_dir
-	self.cur_model_state_fp               = paths.concat(model_dir, "model_state_current.t7")
+	self.cur_model_state_fp         = paths.concat(model_dir, "model_state_current.t7")
 	self.cur_opt_state_fp           = paths.concat(model_dir, "opt_state_current.t7")
 	self.cur_perf_history_fp        = paths.concat(model_dir, "perf_history_current.json")
-	self.cur_model_state_backup_fp        = paths.concat(model_dir, "model_state_current_backup.t7")
+	self.cur_model_state_backup_fp  = paths.concat(model_dir, "model_state_current_backup.t7")
 	self.cur_opt_state_backup_fp    = paths.concat(model_dir, "opt_state_current_backup.t7")
 	self.cur_perf_history_backup_fp = paths.concat(model_dir, "perf_history_current_backup.json")
 
