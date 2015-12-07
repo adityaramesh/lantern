@@ -1,3 +1,8 @@
+--
+-- Defines strategies for forming mini-batches from one or more data sets
+-- during training.
+--
+
 require "cutorch"
 
 local mixed_batch_sampler       = lantern.make_class("mixed_batch_sampler")
