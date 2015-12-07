@@ -1,3 +1,8 @@
+--
+-- Defines some useful command-line options that should be relevant to most
+-- tasks.
+--
+
 require "lfs"
 require "xlua"
 require "cutorch"
