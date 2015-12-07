@@ -3,6 +3,13 @@
 Lantern makes it easy to train models in Torch and monitor real-time performance
 statistics without having to write any boilerplate code.
 
+# Agenda
+
+- Refactor the `make_accmuluator` anonymous function in `run.lua`.
+- Integrate balanced class sampling with framework. How best to do this?
+- Stopping criterion for max time (by extrapolating how many epochs we can do
+  based on the time taken by previous ones).
+
 # Future Features
 
 - "Ready-to-go" models in the namespace `lantern.models`. The layers sizes and
@@ -13,9 +20,6 @@ statistics without having to write any boilerplate code.
     operations to construct deeper VGG nets.)
   - NIN, Maxout, PReLU.
   - "Inception" modules for GoogLeNet.
-
-- Stopping criterion for max time (by extrapolating how many epochs we can do
-  based on the time taken by previous ones).
 
 - Generalize the "train_files" parameter to a list of abstract resources that
   can either be file names or classes. This allows the batch provider to
