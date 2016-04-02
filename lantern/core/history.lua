@@ -1,6 +1,5 @@
 --
--- Utility functions for measuring improvements in the training and testing
--- metrics.
+-- Utility functions for measuring improvements in the training and testing metrics.
 -- 
 
 function lantern.improved_metrics(old, new)
@@ -40,9 +39,9 @@ function lantern.best_metrics(hist, mode, epochs)
 
 	local update_metrics = function(prev_best, cur)
 		for k, v in pairs(cur) do
-			-- If `dir` is not defined for a metric, then we assume
-			-- that it does not make sense to measure whether it has
-			-- improved or not. So we avoid tracking it.
+			-- If `dir` is not defined for a metric, then we assume that it does not
+			-- make sense to measure whether it has improved or not. So we avoid
+			-- tracking it.
 			local dir = lantern.performance_metrics[k]
 
 			if not prev_best[k] and dir then

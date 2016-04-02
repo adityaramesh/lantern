@@ -5,8 +5,8 @@ function lantern.schedule.constant(value)
 	return f
 end
 
--- Used to decay the learning rate. This schedule is advocated by Leon Bottou in
--- "Stochastic Gradient Descent Tricks".
+-- Used to decay the learning rate. This schedule is advocated by Leon Bottou in "Stochastic
+-- Gradient Descent Tricks".
 function lantern.schedule.gentle_decay(init, decay)
 	function f(iter)
 		return init / (1 + iter * decay)
@@ -14,9 +14,8 @@ function lantern.schedule.gentle_decay(init, decay)
 	return f
 end
 
--- Used to decay momentum. See "On the importance of initialization and momentum
--- in deep learning", by Sutskever et al., for the reasoning behind why this
--- schedule is used.
+-- Used to decay momentum. See "On the importance of initialization and momentum in deep learning",
+-- by Sutskever et al., for the reasoning behind why this schedule is used.
 function lantern.schedule.sutskever_blend(max, stretch)
 	stretch = stretch or 250
 	function f(iter)

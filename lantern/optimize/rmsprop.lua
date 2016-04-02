@@ -1,9 +1,9 @@
 local rmsprop = lantern.make_optimizer("rmsprop")
 
 --
--- Note: the `model` parameter here is unused, but kept anyway to preserve API
--- uniformity. Other optimization algorithms may need to use this parameter to
--- perform model-specific operations (e.g. disabling/enabling dropout).
+-- Note: the `model` parameter here is unused, but kept anyway to preserve API uniformity. Other
+-- optimization algorithms may need to use this parameter to perform model-specific operations (e.g.
+-- disabling/enabling dropout).
 --
 function rmsprop:__init(model, state, logger)
 	self.model       = model
@@ -37,9 +37,8 @@ function rmsprop:log_info(batch, cur_lr, loss)
 	end
 
 	local norm_grad = self.grad_params:norm()
-	-- Note that descent := `1 / cur_lr * proj`. Because of cancellation
-	-- with `cur_lr` that occurs in the formulas, we don't actually define
-	-- it this way.
+	-- Note that descent := `1 / cur_lr * proj`. Because of cancellation with `cur_lr` that
+	-- occurs in the formulas, we don't actually define it this way.
 	local proj = -self.state.temp:dot(self.grad_params)
 	local theta = math.acos(proj / (self.state.temp:norm() * norm_grad))
 
@@ -56,25 +55,23 @@ function rmsprop:log_info(batch, cur_lr, loss)
 end
 
 --
--- Log function for RMSProp with NAG. Currently the implementation is exactly
--- the same as the one in `sgu.lua`.
+-- Log function for RMSProp with NAG. Currently the implementation is exactly the same as the one in
+-- `sgu.lua`.
 --
 function rmsprop:log_nag_info(batch, cur_lr, loss)
 	if not self.logger then return end
 	assert(self.state.prev_params ~= nil)
 	assert(self.state.prev_grad_params ~= nil)
 
-	-- See comment for analogous function in `sgu.lua` for more information
-	-- regarding the computations performed below.
+	-- See comment for analogous function in `sgu.lua` for more information regarding the
+	-- computations performed below.
 
 	local norm_grad = self.state.prev_grad_params:norm()
-	-- Note that descent := `1 / cur_lr * proj`. Because of cancellation
-	-- with `cur_lr` that occurs in the formulas, we don't actually define
-	-- it this way.
+	-- Note that descent := `1 / cur_lr * proj`. Because of cancellation with `cur_lr` that
+	-- occurs in the formulas, we don't actually define it this way.
 	local proj = self.state.step:dot(self.state.prev_grad_params)
-	-- Note that theta could be NaN. If this happens, then either the update
-	-- or the gradient has very small magnitude, so the angle could not be
-	-- computed in single precision.
+	-- Note that theta could be NaN. If this happens, then either the update or the gradient has
+	-- very small magnitude, so the angle could not be computed in single precision.
 	local theta = math.acos(proj / (self.state.step:norm() * norm_grad))
 
 	local new_loss = self.model:evaluate(batch)
@@ -97,11 +94,10 @@ function rmsprop:update(batch)
 	assert(cur_lr > 0 and cur_lr <= 1)
 	assert(cur_decay > 0 and cur_decay < 1)
 
-	-- Initializing the parameters here causes the first update to be
-	-- multiplied by `(1 - cur_decay)`, since the running average of the
-	-- second moment estimates will be zero. While it may seem like using a
-	-- severe underestimate may impede convergence, I have actually found
-	-- that the optimizer converges faster this way.
+	-- Initializing the parameters here causes the first update to be multiplied by `(1 -
+	-- cur_decay)`, since the running average of the second moment estimates will be zero. While
+	-- it may seem like using a severe underestimate may impede convergence, I have actually
+	-- found that the optimizer converges faster this way.
 	if not self.state.temp then
 		-- Used as a buffer to store intermediate results.
 		self.state.temp = torch.Tensor():typeAs(self.params):

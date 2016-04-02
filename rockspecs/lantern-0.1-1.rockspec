@@ -24,8 +24,7 @@ dependencies = {
 build = {
 	type = "command",
 
-	-- Please tell me if you know a better way to perform the
-	-- installation...
+	-- Please tell me if you know a better way to perform the installation...
 	build_command = [[
 		rm -rf $(PREFIX)/../../../../../share/lua/5.1/lantern;
 		mkdir $(PREFIX)/../../../../../share/lua/5.1/lantern;

@@ -6,8 +6,8 @@ local accuracy = lantern.make_accumulator("accuracy")
 function accuracy:__init(classes)
 	assert(
 		classes > 1,
-		"Number of classes must be greater than one. For binary " ..
-		"classification, use the indices one and two."
+		"Number of classes must be greater than one. For binary classification, use " ..
+		"the indices one and two."
 	)
 
 	self.name    = "accuracy"
@@ -16,8 +16,7 @@ function accuracy:__init(classes)
 	self.total   = 0
 end
 
--- Note: each row of outputs should contain the probabilities or log
--- probabilities of the classes.
+-- Note: each row of outputs should contain the probabilities or log probabilities of the classes.
 function accuracy:update(batch, state)
 	local targets = batch.targets
 	local outputs = state.outputs
@@ -35,20 +34,19 @@ function accuracy:update(batch, state)
 
 	assert(
 		outputs:nDimension() <= 2,
-		"`outputs` must either be a vector or a matrix whose rows " ..
-		"contain the log probabilities of the classes for each input."
+		"`outputs` must either be a vector or a matrix whose rows contain the log " ..
+		"probabilities of the classes for each input."
 	)
 
 	local check_target = function(target)
 		assert(
 			target > 0,
-			"Found target of zero. The target must be the " ..
-			"_one-based_ index of the ground-truth class."
+			"Found target of zero. The target must be the _one-based_ index of the " ..
+			"ground-truth class."
 		)
 		assert(
 			target <= self.classes,
-			"Found target greater than number of classes given " ..
-			"to constructor."
+			"Found target greater than number of classes given to constructor."
 		)
 	end
 

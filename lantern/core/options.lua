@@ -1,6 +1,5 @@
 --
--- Defines some useful command-line options that should be relevant to most
--- tasks.
+-- Defines some useful command-line options that should be relevant to most tasks.
 --
 
 require "lfs"
@@ -54,9 +53,9 @@ function lantern.default_options(cmd)
 end
 
 --
--- Applies the required command-line arguments using `lantern.default_options`,
--- and sets the variable `lantern.options` to the table of parsed command-line
--- arguments. Returns a table containing the following:
+-- Applies the required command-line arguments using `lantern.default_options`, and sets the
+-- variable `lantern.options` to the table of parsed command-line arguments. Returns a table
+-- containing the following:
 -- * model_dir: The directory in which the model information is saved.
 -- * model:     The model state (null if not provided).
 -- * optimizer: The optimizer state (null if not provided).

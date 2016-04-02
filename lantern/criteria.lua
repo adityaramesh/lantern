@@ -9,10 +9,9 @@ local function size(table)
 end
 
 --
--- Returns true if an improvement has been made over the best value of a metric
--- before the past `epochs` epochs during the past `epochs` epochs. This
--- stopping criterion is designed to be conservative, and may not be appropriate
--- when training large numbers of models.
+-- Returns true if an improvement has been made over the best value of a metric before the past
+-- `epochs` epochs during the past `epochs` epochs. This stopping criterion is designed to be
+-- conservative, and may not be appropriate when training large numbers of models.
 --
 function lantern.criterion.max_epochs_per_improvement(epochs)
 	assert(epochs > 0)
@@ -20,10 +19,9 @@ function lantern.criterion.max_epochs_per_improvement(epochs)
 	return function(hist)
 		assert(hist[#hist].train or hist[#hist].test)
 
-		-- If we want to check for improvement over the past one epoch,
-		-- then we need at least two entries. So if we have fewer than
-		-- `epochs + 1` entries, then we return `true` since we have
-		-- insufficient data.
+		-- If we want to check for improvement over the past one epoch, then we need at
+		-- least two entries. So if we have fewer than `epochs + 1` entries, then we return
+		-- `true` since we have insufficient data.
 		if #hist <= epochs then return true end
 
 		local best_metrics = {
@@ -53,10 +51,9 @@ function lantern.criterion.max_epochs_per_improvement(epochs)
 end
 
 --
--- Returns true if an improvement has been made over the best value of a *test*
--- metric before the past `epochs` epochs during the past `epochs` epochs. This
--- stopping criterion is designed to be conservative, and may not be appropriate
--- when training large numbers of models.
+-- Returns true if an improvement has been made over the best value of a *test* metric before the
+-- past `epochs` epochs during the past `epochs` epochs. This stopping criterion is designed to be
+-- conservative, and may not be appropriate when training large numbers of models.
 --
 function lantern.criterion.max_epochs_per_test_improvement(epochs)
         assert(epochs > 0)
@@ -64,10 +61,9 @@ function lantern.criterion.max_epochs_per_test_improvement(epochs)
         return function(hist)
                 assert(hist[#hist].test)
 
-                -- If we want to check for improvement over the past one epoch,
-                -- then we need at least two entries. So if we have fewer than
-                -- `epochs + 1` entries, then we return `true` since we have
-                -- insufficient data.
+		-- If we want to check for improvement over the past one epoch, then we need at
+		-- least two entries. So if we have fewer than `epochs + 1` entries, then we return
+		-- `true` since we have insufficient data.
                 if #hist <= epochs then return true end
 
                 local best_metrics = lantern.best_metrics(hist, "test", #hist - epochs)

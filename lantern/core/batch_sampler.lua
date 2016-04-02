@@ -1,6 +1,5 @@
 --
--- Defines strategies for forming mini-batches from one or more data sets
--- during training.
+-- Defines strategies for forming mini-batches from one or more data sets during training.
 --
 
 require "cutorch"
@@ -28,8 +27,8 @@ local function initialize(class, args)
 	class.data       = args.data
 	class.batch_size = args.batch_size
 
-	-- First, get the information necessary to allocate the buffers used to
-	-- form the mini-batches.
+	-- First, get the information necessary to allocate the buffers used to form the
+	-- mini-batches.
 
 	local input_batch_type
 	local target_batch_type
@@ -175,9 +174,9 @@ function sequential_batch_sampler:next()
 	assert(self.index <= self.cum_sizes[#self.cum_sizes])
 	
 	if self.index + self.batch_size - 1 >= self.cum_sizes[self.dataset] then
-		-- Note: we assert in the constructor that the size of each
-		-- dataset is at least `batch_size + 1`. So we can cross at most
-		-- one boundary between datasets as we form a mini-batch.
+		-- Note: we assert in the constructor that the size of each dataset is at least
+		-- `batch_size + 1`. So we can cross at most one boundary between datasets as we
+		-- form a mini-batch.
 
 		local count_1 = self.cum_sizes[self.dataset] - self.index + 1
 		assert(count_1 >= 1)

@@ -65,9 +65,8 @@ require "lantern/optimize/rmsprop"
 require "lantern/optimize/adadelta"
 require "lantern/optimize/adadelta_lm"
 
--- Define the abstract resources that can be updated by the model driver. We use
--- this convention so that events that are logged can either be printed to
--- stdout or converted into POST responses.
+-- Define the abstract resources that can be updated by the model driver. We use this convention so
+-- that events that are logged can either be printed to stdout or converted into POST responses.
 lantern.resources                           = {}
 lantern.resources["/history"]               = true
 lantern.resources["/history/train_results"] = true

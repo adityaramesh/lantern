@@ -1,6 +1,6 @@
 --
--- The `batch_provider` class is used to generate objects that can be used
--- to sample from one or more data sources during training or testing.
+-- The `batch_provider` class is used to generate objects that can be used to sample from one or
+-- more data sources during training or testing.
 --
 
 local batch_provider = lantern.make_class("batch_provider")
@@ -49,29 +49,24 @@ end
 -- The arguments to this function must be provided in a table.
 --
 -- Parameters:
--- * train_files (required for training): A table containing one or more strings
---   representing the paths to the files to be used for training data.
--- * test_file (required for testing): The path to the file to be used for
---   testing.
+-- * train_files (required for training): A table containing one or more strings representing the
+--   paths to the files to be used for training data.
+-- * test_file (required for testing): The path to the file to be used for testing.
 -- * target (required): Either "cpu" or "gpu".
--- * batch_size (optional): The size of the batches returned by the samplers.
---   Default: 1.
--- * sampling_strategy (optional): The strategy used to determine how to make
---   use of multiple training files. Supported options are as follows. The
---   default is "mixed".
---   * mixed: Each batch consists of a mixture of instances sampled from the
---     training datasets in a round-robin fashion. When we reach the end of a
---     dataset duirng an epoch, we wrap back to the beginning.
---   * alternating: Each batch consists only of instances from a single
---     dataset, but we alternate between datasets while sampling. After we reach
---     the end of a dataset during an epoch, we wrap back to the beginning.
---   * sequential: Samples all instances from one file before moving on to the
---     next. A batch may contain instances from two datasets.
--- * shuffle (optional): Indicates whether the data in the training files should
---   be accessed in a random order that is determined at the start of each
---   training epoch. Default: `true`.
--- * logger (optional): Used to log real-time events. Default:
---   `lantern.stdout_logger`.
+-- * batch_size (optional): The size of the batches returned by the samplers.  Default: 1.
+-- * sampling_strategy (optional): The strategy used to determine how to make use of multiple
+--   training files. Supported options are as follows. The default is "mixed".
+--   * mixed: Each batch consists of a mixture of instances sampled from the training datasets in a
+--     round-robin fashion. When we reach the end of a dataset duirng an epoch, we wrap back to the
+--     beginning.
+--   * alternating: Each batch consists only of instances from a single dataset, but we alternate
+--     between datasets while sampling. After we reach the end of a dataset during an epoch, we wrap
+--     back to the beginning.
+--   * sequential: Samples all instances from one file before moving on to the next. A batch may
+--     contain instances from two datasets.
+-- * shuffle (optional): Indicates whether the data in the training files should be accessed in a
+--   random order that is determined at the start of each training epoch. Default: `true`.
+-- * logger (optional): Used to log real-time events. Default: `lantern.stdout_logger`.
 --
 function batch_provider:__init(args)
 	validate_args(args)
@@ -109,11 +104,10 @@ function batch_provider:load_train_data()
 		local size = data.inputs:size(1)
 		assert(size == data.targets:size(1))
 
-		-- If the batch size is greater than the size of one of the data
-		-- sets, then there will be a huge amount of redundancy in the
-		-- generated batches. The training procedure is at the very
-		-- least highly questionable. I think it makes sense to fail in
-		-- this case.
+		-- If the batch size is greater than the size of one of the data sets, then there
+		-- will be a huge amount of redundancy in the generated batches. The training
+		-- procedure is at the very least highly questionable. I think it makes sense to
+		-- fail in this case.
 		assert(
 			size >= self.batch_size,
 			"Size of dataset is less than or equal to batch size."
@@ -145,10 +139,9 @@ function batch_provider:load_train_data()
 		-- 4 --------> 1 --------> 4
 		-- 5 --------> 2 --------> 1
 		--
-		-- Each time we move "past the end" of a dataset, we wrap back
-		-- to the beginning. To compute the minimum number of batches
-		-- required to encounter each instance at least once, we need
-		-- to compute the number of datasets that are of maximal size.
+		-- Each time we move "past the end" of a dataset, we wrap back to the beginning. To
+		-- compute the minimum number of batches required to encounter each instance at
+		-- least once, we need to compute the number of datasets that are of maximal size.
 
 		local max_size = self.train_sizes[1]
 		local max_entries = 1
@@ -234,8 +227,8 @@ function batch_provider:make_sampler(mode)
 		strategy = self.sampling_strategy
 		batches  = self.train_batches
 	else
-		-- In testing mode, there's no reason to use shuffling or the
-		-- mixed or alternating sampling strategy.
+		-- In testing mode, there's no reason to use shuffling or the mixed or alternating
+		-- sampling strategy.
 
 		data     = {self.test_data}
 		shuffle  = false

@@ -1,14 +1,14 @@
 --
--- The `driver` class contains the default implementations of the training and
--- testing epoch functions.
+-- The `driver` class contains the default implementations of the training and testing epoch
+-- functions.
 --
 
 require "sys"
 local driver = lantern.make_class("driver")
 
 --
--- The only argument to the constructor is the `batch_provider` instance used to
--- construct mini-batches from the data.
+-- The only argument to the constructor is the `batch_provider` instance used to construct
+-- mini-batches from the data.
 --
 function driver:__init(bp)
 	self.bp = bp

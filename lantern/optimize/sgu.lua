@@ -1,9 +1,9 @@
 local sgu = lantern.make_optimizer("sgu")
 
 --
--- Note: the `model` parameter here is unused, but kept anyway to preserve API
--- uniformity. Other optimization algorithms may need to use this parameter to
--- perform model-specific operations (e.g. disabling/enabling dropout).
+-- Note: the `model` parameter here is unused, but kept anyway to preserve API uniformity. Other
+-- optimization algorithms may need to use this parameter to perform model-specific operations (e.g.
+-- disabling/enabling dropout).
 --
 function sgu:__init(model, state, logger)
 	self.model       = model
@@ -68,18 +68,15 @@ function sgu:log_nag_info(batch, cur_lr, loss)
 	-- 	s_{k + 1} :=  mu * s_k - eta * hat{g}_{k + 1}
 	-- 	           =  eta(mu / eta * s_k - hat{g}_{k + 1})
 	-- 	           =: eta * p_{k + 1}.
-	-- So the analogous notion of "search direction" for SGU with NAG is
-	-- p_{k + 1} = (1 / eta) * s_{k + 1}. Thus we use p_{k + 1} instead of
-	-- s_{k + 1} to compute the quantities below.
+	-- So the analogous notion of "search direction" for SGU with NAG is p_{k + 1} = (1 / eta) *
+	-- s_{k + 1}. Thus we use p_{k + 1} instead of s_{k + 1} to compute the quantities below.
 
 	local norm_grad = self.state.prev_grad_params:norm()
-	-- Note that descent := `1 / cur_lr * proj`. Because of cancellation
-	-- with `cur_lr` that occurs in the formulas, we don't actually define
-	-- it this way.
+	-- Note that descent := `1 / cur_lr * proj`. Because of cancellation with `cur_lr` that
+	-- occurs in the formulas, we don't actually define it this way.
 	local proj = self.state.step:dot(self.state.prev_grad_params)
-	-- Note that theta could be NaN. If this happens, then either the update
-	-- or the gradient has very small magnitude, so the angle could not be
-	-- computed in single precision.
+	-- Note that theta could be NaN. If this happens, then either the update or the gradient has
+	-- very small magnitude, so the angle could not be computed in single precision.
 	local theta = math.acos(proj / (self.state.step:norm() * norm_grad))
 
 	local new_loss = self.model:evaluate(batch)
@@ -106,19 +103,16 @@ function sgu:update(batch)
 		self:log_info(batch, cur_lr, loss)
 		return state
 	elseif self.mom_type == lantern.momentum.nag then
-		-- For the first iteration, we just take the direction of
-		-- steepest descent.
+		-- For the first iteration, we just take the direction of steepest descent.
 		if not self.state.step then
 			local state = self.model:evaluate(batch)
 			self.state.step = self.grad_params:clone():mul(-cur_lr)
 			self.params:add(self.state.step)
 
 			if self.logger then
-				-- Unlike vanilla SGU, `prev_params` and
-				-- `grad_params` need to be part of the state,
-				-- since the logging function depends on their
-				-- values and does not just use them as
-				-- temporary buffers.
+				-- Unlike vanilla SGU, `prev_params` and `grad_params` need to be
+				-- part of the state, since the logging function depends on their
+				-- values and does not just use them as temporary buffers.
 				self.state.prev_params = self.params:clone()
 				self.state.prev_grad_params = self.grad_params:clone()
 				self:log_nag_info(batch, cur_lr, loss)
@@ -135,9 +129,8 @@ function sgu:update(batch)
 		self.params:add(self.state.step)
 		local state = self.model:evaluate(batch)
 
-		-- Update the parameters. We don't multiply the gradient by
-		-- `-cur_lr` in advance because the logging function requires
-		-- the original value.
+		-- Update the parameters. We don't multiply the gradient by `-cur_lr` in advance
+		-- because the logging function requires the original value.
 		self.state.step:add(-cur_lr, self.grad_params)
 		self.params:add(-cur_lr, self.grad_params)
 

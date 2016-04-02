@@ -1,10 +1,9 @@
 --
 -- A version of AdaDelta that uses less memory, but has the following disadvantages:
--- * Does not support logging. Logging slows things down and uses up extra
---   memory anyway, so if you need support for this, then use
---   `lantern.optimizers.adadelta`.
--- * May suffer from numerical issues in certain situations. If you suspect that
---   this is happening to you, try `lantern.optimizers.adadelta`.
+-- * Does not support logging. Logging slows things down and uses up extra memory anyway, so if you
+--   need support for this, then use `lantern.optimizers.adadelta`.
+-- * May suffer from numerical issues in certain situations. If you suspect that this is happening
+--   to you, try `lantern.optimizers.adadelta`.
 --
 
 local adadelta_lm = lantern.make_optimizer("adadelta_lm")
@@ -33,11 +32,10 @@ function adadelta_lm:update(batch)
 	assert(cur_lr > 0 and cur_lr <= 1)
 	assert(cur_decay > 0 and cur_decay < 1)
 
-	-- Initializing the parameters here causes the first update to be
-	-- multiplied by `(1 - cur_decay)`, since the running average of the
-	-- second moment estimates will be zero. While it may seem like using a
-	-- severe underestimate may impede convergence, I have actually found
-	-- that the optimizer converges faster this way.
+	-- Initializing the parameters here causes the first update to be multiplied by `(1 -
+	-- cur_decay)`, since the running average of the second moment estimates will be zero. While
+	-- it may seem like using a severe underestimate may impede convergence, I have actually
+	-- found that the optimizer converges faster this way.
 	if not self.state.temp then
 		-- Used as a buffer to store intermediate values.
 		self.state.temp = torch.Tensor():typeAs(self.params):
@@ -55,9 +53,8 @@ function adadelta_lm:update(batch)
 		self.state.temp:pow(self.grad_params, 2)
 		self.state.grad_mom_2:mul(cur_decay):add(1 - cur_decay, self.state.temp)
 
-		-- Note: adding and subtracting eps from the same quantity will
-		-- not result in a contribution of zero in general. This may
-		-- cause issues in certain situations.
+		-- Note: adding and subtracting eps from the same quantity will not result in a
+		-- contribution of zero in general. This may cause issues in certain situations.
 
 		self.state.update_mom_2:add(self.eps)
 		self.state.grad_mom_2:add(self.eps)
@@ -88,9 +85,8 @@ function adadelta_lm:update(batch)
 		self.state.temp:pow(self.grad_params, 2)
 		self.state.grad_mom_2:mul(cur_decay):add(1 - cur_decay, self.state.temp)
 
-		-- Note: adding and subtracting eps from the same quantity will
-		-- not result in a contribution of zero in general. This may
-		-- cause issues in certain situations.
+		-- Note: adding and subtracting eps from the same quantity will not result in a
+		-- contribution of zero in general. This may cause issues in certain situations.
 
 		self.state.update_mom_2:add(self.eps)
 		self.state.grad_mom_2:add(self.eps)

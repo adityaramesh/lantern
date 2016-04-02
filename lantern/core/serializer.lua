@@ -1,6 +1,6 @@
 --
--- Implements the functions to serialize the model and optimizer state,
--- as well as the performance history.
+-- Implements the functions to serialize the model and optimizer state, as well as the performance
+-- history.
 --
 
 require "lfs"
@@ -64,11 +64,10 @@ function serializer:restore_backup_if_exists(old, new)
 	elseif paths.filep(old) and paths.filep(new) then
 		self.logger:update(
 			"/console/error",
-			"Both `" .. old ..  "` and `" ..  new .. "` exist. The "     ..
-			"driver was likely interrupted while writing to the latter " ..
-			"file. Please carefully inspect both files, and either "     ..
-			"replace the latter file with the former, or delete the "    ..
-			"former."
+			"Both `" .. old ..  "` and `" ..  new .. "` exist. The driver was " ..
+			"likely interrupted while writing to the latter file. Please "      ..
+			"carefully inspect both files, and either replace the latter file " ..
+			"with the former, or delete the former."
 		)
 		return false
 	end
@@ -157,8 +156,8 @@ function serializer:__init(model_dir, perf_metrics, logger)
 	if not self:restore_backups() then
 		self.logger:update(
 			"/console/error",
-			"Both backup and non-backup versions of files exist. " ..
-			"Will not proceed until ambiguities are resolved."
+			"Both backup and non-backup versions of files exist. Will not proceed " ..
+			"until ambiguities are resolved."
 		)
 		os.exit(1)
 	end
