@@ -47,8 +47,8 @@ end
 --   epoch. Default: 1.
 -- * optimizer (optional): Optimizer used to update the model. The default optimizer is
 --   `lantern.optimizers.adadelta_lm` with default parameters.
--- * stop_crit (optional): Criterion used to determine when to stop training.  Default: stop if
---   there is no improvement in **any** performance metric after 10 epochs.
+-- * stop_crit (optional): Criterion used to determine when to stop training. Default: stop if there
+--   is no improvement in **any** performance metric after 10 epochs.
 -- * logger (optional): Used to log real-time events. Default: `lantern.stdout_logger`.
 --
 function lantern.run(args)
