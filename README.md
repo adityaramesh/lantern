@@ -3,23 +3,23 @@
 Lantern makes it easy to train models in Torch and monitor real-time performance
 statistics without having to write any boilerplate code.
 
-# Agenda
+# Future Features
 
-- Support for multiple validation and test sets (so that we can do things like keep separate models
-  for noisy speech and clean speech). The "test epoch" should actually function as a "meta test
-  epoch", in which we perform one pass over all of the validation sets that are currently
-  registered.
-- By default, an accumulator should attach to all data sets; the user should be able to optionally
-  provide the names of the data sets to which the accumulator should be attached, in case the
-  default behavior is not desired.
-- The `make_accumlator` function in `run.lua` needs to be refatored and revised to allow for all of
-  this.
-- Integrate balanced class sampling with framework. How best to do this?
+- Support for logging values at multiple levels of temporal granularity (e.g. every batch, every k
+  batches, every epoch, etc.). For large datasets, the storage requirements for this data can
+  quickly grow large, so we need to be careful about how we store and serialize it. A good solution
+  will not fit into the existing serialization framework.
+  - The right way to do this is probably to use something like TensorFlow's `SummaryWriter`:
+    https://www.tensorflow.org/versions/r0.7/how_tos/summaries_and_tensorboard/index.html. This
+    allows one to log many events during training, without slowing down the driver thread with IO
+    operations.
+  - To implement this concept Torch, it may be best to implement an eventfd-based writer in C++, and
+    interface to it from Lua.
+  - To visualize these high-frequency events, it makes the most sense to rely on the browser and use
+    JS, like TensorBoard.
+
 - Stopping criterion for max time (by extrapolating how many epochs we can do based on the time
   taken by previous ones).
 
-# Future Features
-
-- Generalize the "train_files" parameter to a list of abstract resources that can either be file
-  names or classes. This allows the batch provider to interact with classes that generate data on
-  the fly.
+- Integration with neo, for fast IO.
+- Integration with raze, for distributed optimization using multiple GPUs.
