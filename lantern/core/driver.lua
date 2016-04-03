@@ -1,6 +1,6 @@
 --
--- The `driver` class contains the default implementations of the training and testing epoch
--- functions.
+-- Implements the training and evaluation procedures, given the parameters that describe what they
+-- should do.
 --
 
 require "sys"
