@@ -3,6 +3,13 @@
 Lantern makes it easy to train models in Torch and monitor real-time performance
 statistics without having to write any boilerplate code.
 
+# Agenda
+
+- Change to the same package system in `torch_dataflow`.
+- Use single quotes where appropriate.
+- Change line width to 100.
+- Minimize use of global definitions in `init.lua`.
+
 # Future Features
 
 - Support for logging values at multiple levels of temporal granularity (e.g. every batch, every k
