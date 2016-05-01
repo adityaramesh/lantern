@@ -1,13 +1,13 @@
---
--- Used to specify the way in which instances of a given data set are accessed.
---
+--[[
+Used to specify the way in which instances of a given data set are accessed.
+--]]
 
-require "torch"
-local shuffled_access_strategy = lantern.make_class("shuffled_access_strategy")
-local linear_access_strategy   = lantern.make_class("linear_access_strategy")
+require('torch')
+local shuffled_access_strategy = torch.class('lantern.shuffled_access_strategy')
+local linear_access_strategy   = torch.class('lantern.linear_access_strategy')
 
 local function validate_data(data)
-	assert(type(data) == "table")
+	assert(type(data) == 'table')
 	assert(#data >= 1)
 end
 

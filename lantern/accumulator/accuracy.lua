@@ -1,7 +1,4 @@
-require "torch"
-require "cutorch"
-
-local accuracy = lantern.make_accumulator("accuracy")
+local accuracy = torch.class('lantern.accumulator.accuracy')
 
 function accuracy:__init(classes)
 	assert(
@@ -10,25 +7,26 @@ function accuracy:__init(classes)
 		"the indices one and two."
 	)
 
-	self.name    = "accuracy"
 	self.classes = classes
 	self.correct = 0
 	self.total   = 0
 end
 
--- Note: each row of outputs should contain the probabilities or log probabilities of the classes.
+--[[
+Note: each row of outputs should contain the probabilities or log probabilities of the classes.
+--]]
 function accuracy:update(batch, state)
 	local targets = batch.targets
 	local outputs = state.outputs
 	assert(targets)
 	assert(outputs)
 
-	if type(targets) ~= "number" then
+	if type(targets) ~= 'number' then
 		local t = targets:type()
 		assert(
-			t == "torch.ByteTensor" or
-			t == "torch.LongTensor" or
-			t == "torch.CudaTensor"
+			t == 'torch.ByteTensor' or
+			t == 'torch.LongTensor' or
+			t == 'torch.CudaTensor'
 		)
 	end
 

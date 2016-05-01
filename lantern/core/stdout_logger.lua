@@ -1,5 +1,5 @@
 local json = require "lunajson"
-local stdout_logger = lantern.make_class("stdout_logger")
+local stdout_logger = torch.class("lantern.stdout_logger")
 
 function stdout_logger:__init() end
 

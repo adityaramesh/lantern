@@ -1,17 +1,17 @@
-local sgu = lantern.make_optimizer("sgu")
+local sgu = torch.class('lantern.optimizer.sgu')
 
---
--- Note: the `model` parameter here is unused, but kept anyway to preserve API uniformity. Other
--- optimization algorithms may need to use this parameter to perform model-specific operations (e.g.
--- disabling/enabling dropout).
---
+--[[
+Note: the `model` parameter here is unused, but kept anyway to preserve API uniformity. Other
+optimization algorithms may need to use this parameter to perform model-specific operations (e.g.
+disabling/enabling dropout).
+--]]
 function sgu:__init(model, state, logger)
 	self.model       = model
 	self.params      = model:parameters()
 	self.grad_params = model:grad_parameters()
 	self.state       = state or {}
 
-	self.state.name = "sgu"
+	self.state.name = 'sgu'
 	self.state.iter = self.state.iter          or 0
 	self.lr         = self.state.learning_rate or lantern.schedule.constant(1e-3)
 	self.mom        = self.state.momentum      or lantern.schedule.constant(0.95)
@@ -19,13 +19,13 @@ function sgu:__init(model, state, logger)
 
 	if logger then
 		self.logger = logger
-		self.logger:add_fields({"loss", "norm_grad", "theta", "eta_a", "eta_w"})
+		self.logger:add_fields({'loss', 'norm_grad', 'theta', 'eta_a', 'eta_w'})
 	end
 end
 
---
--- Log function for SGU without NAG.
---
+--[[
+Log function for SGU without NAG.
+]]--
 function sgu:log_info(batch, cur_lr, loss)
 	if not self.logger then return end
 
@@ -44,32 +44,33 @@ function sgu:log_info(batch, cur_lr, loss)
 	local eta_w = math.abs(-self.grad_params:dot(
 		self.prev_grad_params) / descent)
 
-	self.logger:log_value("loss", loss)
-	self.logger:log_value("norm_grad", norm_grad)
-	self.logger:log_value("theta", math.pi)
-	self.logger:log_value("eta_a", eta_a)
-	self.logger:log_value("eta_w", eta_w)
+	self.logger:log_value('loss', loss)
+	self.logger:log_value('norm_grad', norm_grad)
+	self.logger:log_value('theta', math.pi)
+	self.logger:log_value('eta_a', eta_a)
+	self.logger:log_value('eta_w', eta_w)
 end
 
---
--- Log function for SGU with NAG.
---
--- Precondition: `self.grad_params` is *not* modified.
--- Precondition: `self.state.step` =: s_k is defined such that
--- `x_{k + 1} = x_k + s_k`.
---
+--[[
+Log function for SGU with NAG.
+
+Precondition: `self.grad_params` is *not* modified.
+Precondition: `self.state.step` =: s_k is defined such that `x_{k + 1} = x_k + s_k`.
+]]--
 function sgu:log_nag_info(batch, cur_lr, loss)
 	if not self.logger then return end
 	assert(self.state.prev_params ~= nil)
 	assert(self.state.prev_grad_params ~= nil)
 
-	-- In order to allow for a more direct comparison to SGD, we
-	-- make the following observation regarding the NAG update:
-	-- 	s_{k + 1} :=  mu * s_k - eta * hat{g}_{k + 1}
-	-- 	           =  eta(mu / eta * s_k - hat{g}_{k + 1})
-	-- 	           =: eta * p_{k + 1}.
-	-- So the analogous notion of "search direction" for SGU with NAG is p_{k + 1} = (1 / eta) *
-	-- s_{k + 1}. Thus we use p_{k + 1} instead of s_{k + 1} to compute the quantities below.
+	--[[
+	In order to allow for a more direct comparison to SGD, we make the following observation
+	regarding the NAG update:
+		s_{k + 1} :=  mu * s_k - eta * hat{g}_{k + 1}
+		           =  eta(mu / eta * s_k - hat{g}_{k + 1})
+		           =: eta * p_{k + 1}.
+	So the analogous notion of "search direction" for SGU with NAG is `p_{k + 1} = (1 / eta) *
+	s_{k + 1}`. Thus we use `p_{k + 1}` instead of `s_{k + 1}` to compute the quantities below.
+	--]]
 
 	local norm_grad = self.state.prev_grad_params:norm()
 	-- Note that descent := `1 / cur_lr * proj`. Because of cancellation with `cur_lr` that
@@ -83,11 +84,11 @@ function sgu:log_nag_info(batch, cur_lr, loss)
 	local eta_a = cur_lr * (new_loss - loss) / proj
 	local eta_w = math.abs(self.state.step:dot(self.grad_params) / proj)
 
-	self.logger:log_value("loss", loss)
-	self.logger:log_value("norm_grad", norm_grad)
-	self.logger:log_value("theta", theta)
-	self.logger:log_value("eta_a", eta_a)
-	self.logger:log_value("eta_w", eta_w)
+	self.logger:log_value('loss', loss)
+	self.logger:log_value('norm_grad', norm_grad)
+	self.logger:log_value('theta', theta)
+	self.logger:log_value('eta_a', eta_a)
+	self.logger:log_value('eta_w', eta_w)
 end
 
 function sgu:update(batch)
@@ -110,9 +111,11 @@ function sgu:update(batch)
 			self.params:add(self.state.step)
 
 			if self.logger then
-				-- Unlike vanilla SGU, `prev_params` and `grad_params` need to be
-				-- part of the state, since the logging function depends on their
-				-- values and does not just use them as temporary buffers.
+				--[[
+				Unlike vanilla SGU, `prev_params` and `grad_params` need to be part
+				of the state, since the logging function depends on their values and
+				does not just use them as temporary buffers.
+				--]]
 				self.state.prev_params = self.params:clone()
 				self.state.prev_grad_params = self.grad_params:clone()
 				self:log_nag_info(batch, cur_lr, loss)

@@ -1,13 +1,13 @@
---
--- Implements the functions to serialize the model and optimizer state, as well as the performance
--- history.
---
+--[[
+Implements the functions to serialize the model and optimizer state, as well as the performance
+history.
+--]]
 
 require "lfs"
 require "torch"
 
 local json = require "lunajson"
-local serializer = lantern.make_class("serializer")
+local serializer = torch.class('serializer')
 
 function serializer:remove_file_if_exists(fn)
 	if not paths.filep(fn) then return end

@@ -1,4 +1,4 @@
-local csv_logger = lantern.make_class("csv_logger")
+local csv_logger = torch.class("lantern.csv_logger")
 
 function csv_logger:__init(file_path, fields)
 	self.file = io.open(file_path, "a")

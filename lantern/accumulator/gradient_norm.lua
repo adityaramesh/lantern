@@ -1,10 +1,7 @@
-require "torch"
-
-local gradient_norm = lantern.make_accumulator("gradient_norm")
+local gradient_norm = torch.class('lantern.accumulator.gradient_norm')
 
 function gradient_norm:__init(model)
-	self.name  = "gradient_norm"
-	self.model = model
+	self.model   = model
 	self.entries = {}
 end
 

@@ -1,10 +1,9 @@
-local zip = lantern.make_accumulator("zip")
+local zip = torch.class('lantern.accumulator.zip')
 
 function zip:__init(accs)
-	assert(type(accs) == "table")
+	assert(type(accs) == 'table')
 	assert(#accs >= 1)
 
-	self.name = "zip"
 	self.accs = accs
 end
 
@@ -21,7 +20,7 @@ function zip:value()
 	-- metrics of the children accumulators in a single table, and output the result.
 	for _, acc in pairs(self.accs) do
 		local output = acc:value()
-		assert(type(output) == "table")
+		assert(type(output) == 'table')
 
 		local count = 0
 		for _, _ in pairs(output) do
@@ -39,5 +38,6 @@ function zip:value()
 			values[acc.name] = output
 		end
 	end
+
 	return values
 end

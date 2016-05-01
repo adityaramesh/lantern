@@ -1,14 +1,16 @@
 local json = require "lunajson"
 
---
--- This file provides a convenience high-level function called `run`, for training or evaluating a
--- model on a given task. The user can invoke this function to get started with a minimal amount of
--- boilerplate code. Several optional arguments allow a great deal of flexibility and customization
--- of the training process.
---
+--[[
+This file provides a convenience high-level function called `run`, for training or evaluating a
+model on a given task. The user can invoke this function to get started with a minimal amount of
+boilerplate code. Several optional arguments allow a great deal of flexibility and customization of
+the training process.
+--]]
 
--- We do careful verification here to minimize our risk of running into easily-preventable problems
--- much later down the line.
+--[[
+We do careful verification here to minimize our risk of running into easily-preventable problems
+much later down the line.
+--]]
 local function validate_args(args)
 	assert(args)
 	assert(type(args) == "table")
@@ -30,27 +32,27 @@ local function validate_args(args)
 	end
 end
 
---
--- The arguments to this function must be provided in a table.
---
--- Parameters:
--- * model: An implementation of the Model interface.
--- * driver: Class responsible for performing the training and testing epochs.
--- * perf_metrics: A table of strings indicating which performance metrics to compute. If
---   `perf_metrics[m] == "not important"` for some metric `m`, then the model will not necessarily
---   be saved each time `m` is improved. By default, the model is saved if **any** performance
---   metric improves after a training epoch. Valid values: any metric in the table
---   `lantern.performance_metrics`.
--- * model_dir: Directory in which to serialize models and other state information.
--- * history (optional): Used to resume progress from a previous training trajectory.
--- * test_epoch_ratio (optional): The number of training epochs to perform before running a test
---   epoch. Default: 1.
--- * optimizer (optional): Optimizer used to update the model. The default optimizer is
---   `lantern.optimizers.adadelta_lm` with default parameters.
--- * stop_crit (optional): Criterion used to determine when to stop training. Default: stop if there
---   is no improvement in **any** performance metric after 10 epochs.
--- * logger (optional): Used to log real-time events. Default: `lantern.stdout_logger`.
---
+--[[
+The arguments to this function must be provided in a table.
+
+Parameters:
+* model: An implementation of the Model interface.
+* driver: Class responsible for performing the training and testing epochs.
+* perf_metrics: A table of strings indicating which performance metrics to compute. If
+  `perf_metrics[m] == "not important"` for some metric `m`, then the model will not necessarily be
+  saved each time `m` is improved. By default, the model is saved if **any** performance metric
+  improves after a training epoch. Valid values: any metric in the table
+  `lantern.performance_metrics`.
+* model_dir: Directory in which to serialize models and other state information.
+* history (optional): Used to resume progress from a previous training trajectory.
+* test_epoch_ratio (optional): The number of training epochs to perform before running a test epoch.
+  Default: 1.
+* optimizer (optional): Optimizer used to update the model. The default optimizer is
+  `lantern.optimizers.adadelta_lm` with default parameters.
+* stop_crit (optional): Criterion used to determine when to stop training. Default: stop if there is
+  no improvement in **any** performance metric after 10 epochs.
+* logger (optional): Used to log real-time events. Default: `lantern.stdout_logger`.
+--]]
 function lantern.run(args)
 	validate_args(args)
 

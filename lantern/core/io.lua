@@ -2,8 +2,8 @@
 -- Provides a uniform interface for loading data sets from T7 and HDF5 files.
 --
 
-require "hdf5"
-require "torch"
+require('hdf5')
+require('torch')
 
 local function validate(inputs, targets, classes)
 	if targets and classes then
@@ -20,20 +20,20 @@ end
 function lantern.load(fn)
 	local ext = paths.extname(fn)
 
-	if ext == "t7" then
+	if ext == 't7' then
 		local data = torch.load(fn)
 		validate(data.inputs, data.targets, data.classes)
 		return data
-	elseif ext == "hdf5" then
+	elseif ext == 'hdf5' then
 		local file = hdf5.open(fn)
-		local data = {inputs = file:read("/inputs"):all()}
+		local data = {inputs = file:read('/inputs'):all()}
 
 		if file._rootGroup._children.targets then
-			data.targets = file:read("/targets"):all()
+			data.targets = file:read('/targets'):all()
 		end
 
 		if file._rootGroup._children.classes then
-			data.classes = file:read("/classes"):all()[1]
+			data.classes = file:read('/classes'):all()[1]
 		end
 
 		validate(data.inputs, data.targets, data.classes)
@@ -47,15 +47,15 @@ function lantern.save(fn, data)
 	validate(data.inputs, data.targets, data.classes)
 	local ext = paths.extname(fn)
 
-	if ext == "t7" then
+	if ext == 't7' then
 		torch.save(fn, data)
-	elseif ext == "hdf5" then
+	elseif ext == 'hdf5' then
 		local file = hdf5.open(fn)
-		file:write("/inputs", data.inputs)
+		file:write('/inputs', data.inputs)
 
 		if data.targets then
-			file:write("/targets", data.targets)
-			file:write("/classes", torch.IntTensor{data.classes})
+			file:write('/targets', data.targets)
+			file:write('/classes', torch.IntTensor{data.classes})
 		end
 
 		file:close()

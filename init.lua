@@ -1,44 +1,6 @@
-lantern = {}
-lantern.class = require "class"
+lantern = {
 
-function lantern.make_class(name, base)
-	assert(
-		not lantern[name],
-		"Class `" .. name .. "` already defined."
-	)
-
-	local class
-	if base then
-		class = lantern.class(name, base)
-	else
-		class = lantern.class(name)
-	end
-
-	lantern[name] = class
-	return class
-end
-
-function lantern.make_accumulator(name)
-	assert(
-		not lantern.accumulators[name],
-		"Accumulator `" .. name .. "` already defined."
-	)
-
-	local class = lantern.class(name)
-	lantern.accumulators[name] = class
-	return class
-end
-
-function lantern.make_optimizer(name)
-	assert(
-		not lantern.optimizers[name],
-		"Optimizer `" .. name .. "` already defined."
-	)
-
-	local class = lantern.class(name)
-	lantern.optimizers[name] = class
-	return class
-end
+}
 
 lantern.accumulators                    = {}
 lantern.performance_metrics             = {}
@@ -46,24 +8,27 @@ lantern.performance_metrics["accuracy"] = "increasing"
 
 require "lantern/core/history"
 
-require "lantern/accumulators/accuracy"
-require "lantern/accumulators/gradient_norm"
-require "lantern/accumulators/zip"
+-- DONE
+require "lantern/accumulator/accuracy"
+require "lantern/accumulator/gradient_norm"
+require "lantern/accumulator/zip"
 
 lantern.criterion = {}
 
-require "lantern/criteria"
+-- DONE
+require "lantern/core/criterion"
 
 lantern.momentum   = {}
 lantern.schedule   = {}
 lantern.optimizers = {}
 
-require "lantern/optimize/momentum"
-require "lantern/optimize/schedule"
-require "lantern/optimize/sgu"
-require "lantern/optimize/rmsprop"
-require "lantern/optimize/adadelta"
-require "lantern/optimize/adadelta_lm"
+-- DONE
+require "lantern/optimizer/momentum"
+require "lantern/optimizer/schedule"
+require "lantern/optimizer/sgu"
+require "lantern/optimizer/rmsprop"
+require "lantern/optimizer/adadelta"
+require "lantern/optimizer/adadelta_lm"
 
 -- Define the abstract resources that can be updated by the model driver. We use this convention so
 -- that events that are logged can either be printed to stdout or converted into POST responses.

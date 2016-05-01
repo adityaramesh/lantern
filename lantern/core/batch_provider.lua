@@ -1,21 +1,21 @@
---
--- The `batch_provider` class is used to generate objects that can be used to sample from one or
--- more data sources during training or testing.
---
+--[[
+The `batch_provider` class is used to generate objects that can be used to sample from one or more
+data sources during training or testing.
+--]]
 
-local batch_provider = lantern.make_class("batch_provider")
+local batch_provider = torch.class('batch_provider')
 
 local function validate_args(args)
-	assert(type(args) == "table")
-	assert(args.target == "cpu" or args.target == "gpu")
+	assert(type(args) == 'table')
+	assert(args.target == 'cpu' or args.target == 'gpu')
 
 	if args.train_files then
-		assert(type(args.train_files) == "table")
+		assert(type(args.train_files) == 'table')
 		assert(#args.train_files >= 1)
 	end
 
 	if args.test_file then
-		assert(type(args.test_file) == "string")
+		assert(type(args.test_file) == 'string')
 	end
 
 	if args.batch_size then
@@ -25,19 +25,19 @@ local function validate_args(args)
 	end
 
 	if args.shuffle then
-		assert(type(args.shuffle) == "boolean")
+		assert(type(args.shuffle) == 'boolean')
 	else
 		args.shuffle = true
 	end
 
 	if args.sampling_strategy then
 		assert(
-			args.sampling_strategy == "mixed"       or
-			args.sampling_strategy == "alternating" or
-			args.sampling_strategy == "sequential"
+			args.sampling_strategy == 'mixed'       or
+			args.sampling_strategy == 'alternating' or
+			args.sampling_strategy == 'sequential'
 		)
 	else
-		args.sampling_strategy = "mixed"
+		args.sampling_strategy = 'mixed'
 	end
 
 	if not args.logger then
@@ -110,7 +110,7 @@ function batch_provider:load_train_data()
 		-- fail in this case.
 		assert(
 			size >= self.batch_size,
-			"Size of dataset is less than or equal to batch size."
+			'Size of dataset is less than or equal to batch size.'
 		)
 
 		self.train_data[#self.train_data + 1] = data
@@ -129,7 +129,7 @@ function batch_provider:load_train_data()
 		self.train_sizes[#self.train_sizes + 1] = data.inputs:size(1)
 	end
 
-	if self.sampling_strategy == "mixed" then
+	if self.sampling_strategy == 'mixed' then
 		-- Here's the picture used to derive this:
 		--
 		-- Dataset 1   Dataset 2   Dataset 3
@@ -157,7 +157,7 @@ function batch_provider:load_train_data()
 		
 		self.instances = (max_size - 1) * #self.train_data + max_entries
 		self.train_batches = math.ceil(self.instances / self.batch_size)
-	elseif self.sampling_strategy == "alternating" then
+	elseif self.sampling_strategy == 'alternating' then
 		local max_batches = math.ceil(self.train_sizes[1] / self.batch_size)
 		local max_entries = 1
 
@@ -172,7 +172,7 @@ function batch_provider:load_train_data()
 		end
 		
 		self.train_batches = (max_batches - 1) * #self.train_data + max_entries
-	elseif self.sampling_strategy == "sequential" then
+	elseif self.sampling_strategy == 'sequential' then
 		self.train_batches = math.ceil(self.total_train_size / self.batch_size)
 	else
 		error("Invalid sampling strategy `" .. self.sampling_strategy .. "`.")
@@ -189,9 +189,9 @@ function batch_provider:infer_properties(data)
 	self.input_type = data.inputs:type()
 	self.target_type = data.targets:type()
 
-	if self.input_type == "torch.DoubleTensor" and self.target == "gpu" then
+	if self.input_type == 'torch.DoubleTensor' and self.target == 'gpu' then
 		self.logger:update(
-			"/console/warning", 
+			'/console/warning', 
 			"Input type is double-precision, but will be truncated " ..
 			"to single-precision after being transferred to the GPU."
 		)
@@ -199,7 +199,7 @@ function batch_provider:infer_properties(data)
 
 	if self.target_type == "torch.DoubleTensor" and self.target == "gpu" then
 		self.logger:update(
-			"/console/warning", 
+			'/console/warning', 
 			"Target type is double-precision, but will be truncated " ..
 			"to single-precision after being transferred to the GPU."
 		)

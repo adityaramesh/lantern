@@ -1,17 +1,17 @@
-local rmsprop = lantern.make_optimizer("rmsprop")
+local rmsprop = torch.class('lantern.optimizer.rmsprop')
 
---
--- Note: the `model` parameter here is unused, but kept anyway to preserve API uniformity. Other
--- optimization algorithms may need to use this parameter to perform model-specific operations (e.g.
--- disabling/enabling dropout).
---
+--[[
+Note: the `model` parameter here is unused, but kept anyway to preserve API uniformity. Other
+optimization algorithms may need to use this parameter to perform model-specific operations (e.g.
+disabling/enabling dropout).
+--]]
 function rmsprop:__init(model, state, logger)
 	self.model       = model
 	self.params      = model:parameters()
 	self.grad_params = model:grad_parameters()
 	self.state       = state or {}
 
-	self.state.name = "rmsprop"
+	self.state.name = 'rmsprop'
 	self.state.iter = self.state.iter          or 0
 	self.eps        = self.state.eps           or 1e-10
 	self.lr         = self.state.learning_rate or lantern.schedule.constant(1e-3)
@@ -21,13 +21,13 @@ function rmsprop:__init(model, state, logger)
 
 	if logger then
 		self.logger = logger
-		self.logger:add_fields({"loss", "norm_grad", "theta", "eta_a", "eta_w"})
+		self.logger:add_fields({'loss', 'norm_grad', 'theta', 'eta_a', 'eta_w'})
 	end
 end
 
---
--- Log function for RMSProp without NAG.
---
+--[[
+Log function for RMSProp without NAG.
+--]]
 function rmsprop:log_info(batch, cur_lr, loss)
 	if not self.logger then return end
 
@@ -47,17 +47,17 @@ function rmsprop:log_info(batch, cur_lr, loss)
 	local eta_a = cur_lr * (new_loss - loss) / proj
 	local eta_w = math.abs(-self.state.temp:dot(self.grad_params) / proj)
 
-	self.logger:log_value("loss", loss)
-	self.logger:log_value("norm_grad", norm_grad)
-	self.logger:log_value("theta", theta)
-	self.logger:log_value("eta_a", eta_a)
-	self.logger:log_value("eta_w", eta_w)
+	self.logger:log_value('loss', loss)
+	self.logger:log_value('norm_grad', norm_grad)
+	self.logger:log_value('theta', theta)
+	self.logger:log_value('eta_a', eta_a)
+	self.logger:log_value('eta_w', eta_w)
 end
 
---
--- Log function for RMSProp with NAG. Currently the implementation is exactly the same as the one in
--- `sgu.lua`.
---
+--[[
+Log function for RMSProp with NAG. Currently the implementation is exactly the same as the one in
+`sgu.lua`.
+]]--
 function rmsprop:log_nag_info(batch, cur_lr, loss)
 	if not self.logger then return end
 	assert(self.state.prev_params ~= nil)
@@ -78,11 +78,11 @@ function rmsprop:log_nag_info(batch, cur_lr, loss)
 	local eta_a = cur_lr * (new_loss - loss) / proj
 	local eta_w = math.abs(self.state.step:dot(self.grad_params) / proj)
 
-	self.logger:log_value("loss", loss)
-	self.logger:log_value("norm_grad", norm_grad)
-	self.logger:log_value("theta", theta)
-	self.logger:log_value("eta_a", eta_a)
-	self.logger:log_value("eta_w", eta_w)
+	self.logger:log_value('loss', loss)
+	self.logger:log_value('norm_grad', norm_grad)
+	self.logger:log_value('theta', theta)
+	self.logger:log_value('eta_a', eta_a)
+	self.logger:log_value('eta_w', eta_w)
 end
 
 function rmsprop:update(batch)
@@ -94,10 +94,12 @@ function rmsprop:update(batch)
 	assert(cur_lr > 0 and cur_lr <= 1)
 	assert(cur_decay > 0 and cur_decay < 1)
 
-	-- Initializing the parameters here causes the first update to be multiplied by `(1 -
-	-- cur_decay)`, since the running average of the second moment estimates will be zero. While
-	-- it may seem like using a severe underestimate may impede convergence, I have actually
-	-- found that the optimizer converges faster this way.
+	--[[
+	Initializing the parameters here causes the first update to be multiplied by `(1 -
+	cur_decay)`, since the running average of the second moment estimates will be zero. While it
+	may seem like using a severe underestimate may impede convergence, I have actually found
+	that the optimizer converges faster this way.
+	--]]
 	if not self.state.temp then
 		-- Used as a buffer to store intermediate results.
 		self.state.temp = torch.Tensor():typeAs(self.params):

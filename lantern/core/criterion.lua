@@ -1,6 +1,6 @@
---
--- Definitions of the stopping criteria.
---
+--[[
+Definitions of the stopping criteria.
+--]]
 
 local function size(table)
 	local count = 0

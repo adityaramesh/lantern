@@ -4,7 +4,7 @@
 --
 
 require "sys"
-local driver = lantern.make_class("driver")
+local driver = torch.class("lantern.driver")
 
 --
 -- The only argument to the constructor is the `batch_provider` instance used to construct

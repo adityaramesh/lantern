@@ -1,24 +1,22 @@
---
--- Defines strategies for forming mini-batches from one or more data sets during training.
---
+--[[
+Defines strategies for forming mini-batches from one or more data sets during training.
+--]]
 
-require "cutorch"
-
-local mixed_batch_sampler       = lantern.make_class("mixed_batch_sampler")
-local alternating_batch_sampler = lantern.make_class("alternating_batch_sampler")
-local sequential_batch_sampler  = lantern.make_class("sequential_batch_sampler")
+local mixed_batch_sampler       = torch.class('mixed_batch_sampler')
+local alternating_batch_sampler = torch.class('alternating_batch_sampler')
+local sequential_batch_sampler  = torch.class('sequential_batch_sampler')
 
 local function validate_args(args)
-	assert(type(args) == "table")
-	assert(args.target == "cpu" or args.target == "gpu")
-	assert(type(args.data) == "table")
+	assert(type(args) == 'table')
+	assert(args.target == 'cpu' or args.target == 'gpu')
+	assert(type(args.data) == 'table')
 	assert(#args.data >= 1)
 	assert(args.batch_size >= 1)
-	assert(type(args.shuffle) == "boolean")
-	assert(type(args.input_shape) == "userdata")
-	assert(type(args.target_shape) == "userdata")
-	assert(type(args.input_type) == "string")
-	assert(type(args.target_type) == "string")
+	assert(type(args.shuffle) == 'boolean')
+	assert(type(args.input_shape) == 'userdata')
+	assert(type(args.target_shape) == 'userdata')
+	assert(type(args.input_type) == 'string')
+	assert(type(args.target_type) == 'string')
 end
 
 local function initialize(class, args)
@@ -33,12 +31,12 @@ local function initialize(class, args)
 	local input_batch_type
 	local target_batch_type
 
-	if args.target == "cpu" then
+	if args.target == 'cpu' then
 		input_batch_type = args.input_type
 		target_batch_type = args.target_type
 	else
-		input_batch_type = "torch.CudaTensor"
-		target_batch_type = "torch.CudaTensor"
+		input_batch_type = 'torch.CudaTensor'
+		target_batch_type = 'torch.CudaTensor'
 	end
 
 	local input_batch_shape = torch.LongStorage(#args.input_shape + 1)
@@ -174,9 +172,11 @@ function sequential_batch_sampler:next()
 	assert(self.index <= self.cum_sizes[#self.cum_sizes])
 	
 	if self.index + self.batch_size - 1 >= self.cum_sizes[self.dataset] then
-		-- Note: we assert in the constructor that the size of each dataset is at least
-		-- `batch_size + 1`. So we can cross at most one boundary between datasets as we
-		-- form a mini-batch.
+		--[[
+		Note: we assert in the constructor that the size of each dataset is at least
+		`batch_size + 1`. So we can cross at most one boundary between datasets as we form a
+		mini-batch.
+		--]]
 
 		local count_1 = self.cum_sizes[self.dataset] - self.index + 1
 		assert(count_1 >= 1)

@@ -1,23 +1,23 @@
---
--- If memory usage is a concern, try `lantern.adadelta_lm` instead. The limited-memory version takes
--- a numerical shortcut to avoid storaging an additional temporary buffer. This shortcut may cause
--- numerical problems, but this has never happened to me in practice.
---
+--[[
+If memory usage is a concern, try `lantern.adadelta_lm` instead. The limited-memory version takes a
+numerical shortcut to avoid storaging an additional temporary buffer. This shortcut may cause
+numerical problems, but this has never happened to me in practice.
+--]]
 
-local adadelta = lantern.make_optimizer("adadelta")
+local adadelta = torch.class.('lantern.optimizer.adadelta')
 
---
--- Note: the `model` parameter here is unused, but kept anyway to preserve API uniformity. Other
--- optimization algorithms may need to use this parameter to perform model-specific operations (e.g.
--- disabling/enabling dropout).
---
+--[[
+Note: the `model` parameter here is unused, but kept anyway to preserve API uniformity. Other
+optimization algorithms may need to use this parameter to perform model-specific operations (e.g.
+disabling/enabling dropout).
+--]]
 function adadelta:__init(model, state, logger)
 	self.model       = model
 	self.params      = model:parameters()
 	self.grad_params = model:grad_parameters()
 	self.state       = state or {}
 
-	self.state.name = "adadelta"
+	self.state.name = 'adadelta'
 	self.state.iter = self.state.iter          or 0
 	self.eps        = self.state.eps           or 1e-10
 	self.lr         = self.state.learning_rate or lantern.schedule.constant(1e-3)
@@ -27,13 +27,13 @@ function adadelta:__init(model, state, logger)
 
 	if logger then
 		self.logger = logger
-		self.logger:add_fields({"loss", "norm_grad", "theta", "eta_a", "eta_w"})
+		self.logger:add_fields({'loss', 'norm_grad', 'theta', 'eta_a', 'eta_w'})
 	end
 end
 
---
--- Log function for AdaDelta without NAG.
---
+--[[
+Log function for AdaDelta without NAG.
+--]]
 function adadelta:log_info(batch, cur_lr, loss)
 	if not self.logger then return end
 
@@ -51,17 +51,17 @@ function adadelta:log_info(batch, cur_lr, loss)
 	local eta_a = (new_loss - loss) / descent
 	local eta_w = math.abs(self.state.temp_1:dot(self.grad_params) / descent)
 
-	self.logger:log_value("loss", loss)
-	self.logger:log_value("norm_grad", norm_grad)
-	self.logger:log_value("theta", theta)
-	self.logger:log_value("eta_a", eta_a)
-	self.logger:log_value("eta_w", eta_w)
+	self.logger:log_value('loss', loss)
+	self.logger:log_value('norm_grad', norm_grad)
+	self.logger:log_value('theta', theta)
+	self.logger:log_value('eta_a', eta_a)
+	self.logger:log_value('eta_w', eta_w)
 end
 
---
--- Log function for AdaDelta with NAG. Currently the implementation is exactly the same as the one
--- in `sgu.lua`.
---
+--[[
+Log function for AdaDelta with NAG. Currently the implementation is exactly the same as the one in
+`sgu.lua`.
+--]]
 function adadelta:log_nag_info(batch, cur_lr, loss)
 	if not self.logger then return end
 	assert(self.state.prev_params ~= nil)
@@ -82,11 +82,11 @@ function adadelta:log_nag_info(batch, cur_lr, loss)
 	local eta_a = cur_lr * (new_loss - loss) / proj
 	local eta_w = math.abs(self.state.step:dot(self.grad_params) / proj)
 
-	self.logger:log_value("loss", loss)
-	self.logger:log_value("norm_grad", norm_grad)
-	self.logger:log_value("theta", theta)
-	self.logger:log_value("eta_a", eta_a)
-	self.logger:log_value("eta_w", eta_w)
+	self.logger:log_value('loss', loss)
+	self.logger:log_value('norm_grad', norm_grad)
+	self.logger:log_value('theta', theta)
+	self.logger:log_value('eta_a', eta_a)
+	self.logger:log_value('eta_w', eta_w)
 end
 
 function adadelta:update(batch)
@@ -98,10 +98,12 @@ function adadelta:update(batch)
 	assert(cur_lr > 0 and cur_lr <= 1)
 	assert(cur_decay > 0 and cur_decay < 1)
 
-	-- Initializing the parameters here causes the first update to be multiplied by `(1 -
-	-- cur_decay)`, since the running average of the second moment estimates will be zero. While
-	-- it may seem like using a severe underestimate may impede convergence, I have actually
-	-- found that the optimizer converges faster this way.
+	--[[
+	Initializing the parameters here causes the first update to be multiplied by
+	`(1 - cur_decay)`, since the running average of the second moment estimates will be zero.
+	While it may seem like using a severe underestimate may impede convergence, I have actually
+	found that the optimizer converges faster this way.
+	--]]
 	if not self.state.temp then
 		-- Used as buffers to store intermediate values.
 		self.state.temp_1 = torch.Tensor():typeAs(self.params):
@@ -119,12 +121,14 @@ function adadelta:update(batch)
 	if self.mom_type == lantern.momentum.none then
 		local state = self.model:evaluate(batch)
 
-		-- Note: we could make the implementation below faster by only only one temporary
-		-- buffer instead of two, but this would involve adding and subtracting epsilon to
-		-- the same buffers.  Using floating-point arithmetic, the net change will not
-		-- always be zero. I suspect that this may have a detrimental effect close to
-		-- convergence (when the other terms in the square root will also be small), so this
-		-- optimization is not used.
+		--[[
+		Note: we could make the implementation below faster by only only one temporary
+		buffer instead of two, but this would involve adding and subtracting epsilon to the
+		same buffers. Using floating-point arithmetic, the net change will not always be
+		zero. I suspect that this may have a detrimental effect close to convergence (when
+		the other terms in the square root will also be small), so this optimization is not
+		used here.
+		-]]
 
 		self.state.temp_2:pow(self.grad_params, 2)
 		self.state.grad_mom_2:mul(cur_decay):add(1 - cur_decay, self.state.temp_2)

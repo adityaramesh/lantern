@@ -5,10 +5,10 @@ statistics without having to write any boilerplate code.
 
 # Agenda
 
-- Change to the same package system in `torch_dataflow`.
 - Use single quotes where appropriate.
-- Change line width to 100.
 - Minimize use of global definitions in `init.lua`.
+- Move `criteria.lua` into `core`; rename to `criterion`.
+- Stop using `name` field in accumulators, and instead use torch.type.
 
 # Future Features
 
