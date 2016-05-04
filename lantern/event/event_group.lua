@@ -24,16 +24,35 @@ end
 
 --[[
 Parameters:
-* `args.output_path`: Path in which the directory to contain the output of this event group should
-  be created.
+* `prev_experiment_dir`: Directory containing the results of the previous experiments from which
+  we are continuing (should be `nil` if we are starting from scratch).
+* `cur_experiment_dir`: Directory to contain the results of the current experiment.
 --]]
 function event_group:initialize(args)
 	assert(not self.initialized, "Event group has already been initialized.")
+	assert(paths.dirp(args.cur_experiment_dir), "Directory for current experiment does not " ..
+		"exist.")
 
-	self.output_dir = paths.concat(args.output_path, self.name)
+	self.output_dir = paths.concat(args.cur_experiment_dir, self.name)
 	lantern.make_directory_if_not_exists(self.output_dir, self.logger)
 
 	local args = {output_dir = self.output_dir, logger = self.logger}
+
+	if args.prev_experiment_dir ~= nil then
+		assert(paths.dirp(args.prev_experiment_dir), "Directory for previous experiment " ..
+			"does not exist.")
+
+		local input_dir = paths.concat(args.prev_experiment_dir, self.name)
+
+		if not paths.dirp(input_dir) and self.logger ~= nil then
+			self.logger:log('/console/warning', F"Directory for event group " ..
+				"'{self.name}' does not exist in previous experiment directory " ..
+				"'{args.prev_experiment_dir}'.")
+		else
+			args.input_dir = input_dir
+		end
+	end
+
 	self.logger  = lantern.event.logger(args)
 	self.tracker = lantern.event.progress_tracker(args)
 
