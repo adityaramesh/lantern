@@ -34,7 +34,8 @@ Required parameters:
 * `args.name`: The name of this message.
 
 Optional parameters:
-* `args.required`: Whether this field is required (false by default).
+* `args.required`: Whether this message is required (false by default). This parameter only has an
+  effect if this `message_definition` is nested within another one.
 --]]
 function message_definition:__init(args)
 	assert(type(args.name) == 'string')
@@ -65,11 +66,11 @@ end
 function message_definition:__eq(rhs)
 	if #self.fields ~= #rhs.fields or #self.messages ~= #rhs.messages then return false end
 
-	for k, v in self.name_to_field do
+	for k, v in pairs(self.name_to_field) do
 		if rhs.name_to_field[k] == nil or v ~= rhs.name_to_field[k] then return false end
 	end
 
-	for k, v in self.name_to_msg do
+	for k, v in pairs(self.name_to_msg) do
 		if rhs.name_to_msg[k] == nil or v ~= rhs.name_to_msg[k] then return false end
 	end
 
