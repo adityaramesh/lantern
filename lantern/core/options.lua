@@ -16,33 +16,23 @@ function lantern.default_options(cmd)
 	cmd:option("-experiment_root", 'experiments', "Root directory for experiments.")
 end
 
-local function validate_options(options)
-	assert(
-		{'create', 'resume', 'replace'}[options.task] ~= nil,
-		"Option 'task' must be one of {'create', 'resume', 'replace'}."
-	)
+local function validate_options(options, logger)
+	lantern.fail_if({'create', 'resume', 'replace'}[options.task] == nil,
+		"Option 'task' must be one of {'create', 'resume', 'replace'}.")
 
-	assert(
-		paths.dirp(options.experiment_root),
-		F"Experiment root {options.experiment_root} does not exist."
-	)
+	lantern.fail_if(not paths.dirp(options.experiment_root),
+		F"Experiment root {options.experiment_root} does not exist.")
 
-	assert(
-		string.len(options.experiment) ~= 0,
-		"Experiment name must be provided."
-	)
+	lantern.fail_if(string.len(options.experiment) == 0, "Experiment name must be provided.")
 
-	assert(
-		string.match(options.experiment, '^[A-Za-z0-9.-_]+$') ~= nil,
-		"Experiment name can only contain letters, digits, periods, hyphens, and " ..
-		"underscores."
-	)
+	lantern.fail_if(not lantern.is_valid_name(options.experiment),
+		lantern.invalid_name_msg("Option 'experiment_name'"))
 
 	local gpu_list = {}
 
 	for s in string.gmatch(options.gpus, '([^%s,]+)') do
 		local i = tonumber(s)
-		assert(i >= 1, "GPU ordinals must be positive integers.")
+		lantern.fail_if(i <= 0, "GPU ordinals must be positive integers.")
 		gpu_list[#gpu_list + 1] = i
 	end
 
@@ -53,14 +43,19 @@ local function validate_options(options)
 		options.version)
 
 	if options.task == 'create' then
-		assert(not paths.dirp(exp_dir), F"Experiment directory {exp_dir} already exists.")
+		lantern.fail_if(paths.dirp(exp_dir), F"Experiment directory {exp_dir} already " ..
+			"exists.")
 		lantern.make_directory(exp_dir)
 	elseif options.task == 'resume' then
-		assert(paths.dirp(exp_dir), F"Experiment directory {exp_dir} does not exist.")
-		assert(string.len(options.version) ~= 0, "Experiment version must be provided.")
-		assert(paths.dirp(exp_ver_dir), F"Experiment version {exp_ver_dir} does not exist.")
+		lantern.fail_if(not paths.dirp(exp_dir), F"Experiment directory {exp_dir} does " ..
+			"not exist.")
+		lantern.fail_if(string.len(options.version) == 0, "Experiment version must be " ..
+			"provided.")
+		lantern.fail_if(not paths.dirp(exp_ver_dir), F"Experiment version {exp_ver_dir} " ..
+			"does not exist.")
 	elseif options.task == 'replace' then
-		assert(paths.dirp(exp_dir), F"Experiment directory {exp_dir} does not exist.")
+		lantern.fail_if(not paths.dirp(exp_dir), F"Experiment directory {exp_dir} does " ..
+			"not exist.")
 		lantern.remove_directory(exp_dir)
 		lantern.make_directory(exp_dir)
 	end
