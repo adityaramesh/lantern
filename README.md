@@ -15,6 +15,15 @@ Put this in the driver:
 	torch.manualSeed(1)
 	cutorch.manualSeed(1)
 
+- [ ] Pipe stdout and stderr for lantern to the log file, if it is provided.
+- [ ] Make the optimizer and driver store private dummy events that they add to the event groups
+  provided by the user. This makes the output of the progress tracker the most natural (e.g.
+  `adadelta_lm/grad_norm`, `driver/model_eval_time`. etc.)
+- [ ] Following the suggestion above, design events so that a single event logs a lot of information
+  associated with the phenomenon it is designed to track, rather than forcing each event to log a
+  single statistic.
+  - Full path for metrics: `event_group/event/metric` (e.g. `validation/confusion/accuracy`).
+
 - [x] Revised default options.
   - Things to include: task, experiment, version ('current' or best associated with a particular
     metric), `experiment_root` (default: `./experiments`).
@@ -22,26 +31,25 @@ Put this in the driver:
     `create`, `resume`, and `replace`.
 
 - [ ] Event API.
+  - [x] `progress_tracker.lua` and test
+  - [ ] `logger.lua`
   - [ ] `loss.lua`
-  - [ ] `progress_tracker.lua` and test
-  - [ ] `confusion.lua`
     - Visualize the class-conditional distribution using a donut.
-  - [ ] `accuracy.lua`
-  - [ ] `balanced_accuracy.lua` and test for both accuracy events
-    - Weighting by inverse frequency (`f_k := t_k / N`) is equivalent to weighting by `1 / t_k`,
-      which reduces to regular accuracy in the case where all classes have the same number of
-      instances.
+  - [ ] `confusion.lua` (not an event, but common object used by events related to accuracy).
+    - Balanced accuracy: weighting by inverse frequency (`f_k := t_k / N`) is equivalent to
+      weighting by `1 / t_k`, which reduces to regular accuracy in the case where all classes have
+      the same number of instances.
 
 - [ ] Checkpoint class.
   - Put this in `core` or `event`?
   - `<experiment_name>/current/{files}` or
-    `<experiment_name>/<dataset_name>/best_<event_name>/{files}`, where `{files}` consists of:
+    `<experiment_name>/best_<event_group>/best_<event_name>/{files}`, where `{files}` consists of:
       - `event_data.dat` (measurements from each event group; messagepack format)
         - This file also contains non-numeric data like images and audio in binary format. They are
 	  not written to files in separate directories, because it makes it much easier and more
 	  efficient to checkpoint event data when it is all in a single file.
       - `best_metrics.dat` (best metrics as saved by the progress tracker).
-  - Test
+  - Test event and checkpointer
 
 - [ ] Consolidate `run.lua` and `driver.lua`.
   - Accept the paths from `parse_options` and perform the deserialization/construction from scratch
