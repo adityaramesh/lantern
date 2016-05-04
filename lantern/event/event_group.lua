@@ -26,7 +26,8 @@ end
 Parameters:
 * `prev_experiment_dir`: Directory containing the results of the previous experiments from which
   we are continuing (should be `nil` if we are starting from scratch).
-* `cur_experiment_dir`: Directory to contain the results of the current experiment.
+* `cur_experiment_dir`: Directory to contain the results of the current experiment (this could
+  potentially be the same as `prev_experiment_dir`).
 --]]
 function event_group:initialize(args)
 	assert(not self.initialized, "Event group has already been initialized.")
@@ -37,22 +38,6 @@ function event_group:initialize(args)
 	lantern.make_directory_if_not_exists(self.output_dir, self.logger)
 
 	local args = {output_dir = self.output_dir, logger = self.logger}
-
-	if args.prev_experiment_dir ~= nil then
-		assert(paths.dirp(args.prev_experiment_dir), "Directory for previous experiment " ..
-			"does not exist.")
-
-		local input_dir = paths.concat(args.prev_experiment_dir, self.name)
-
-		if not paths.dirp(input_dir) and self.logger ~= nil then
-			self.logger:log('/console/warning', F"Directory for event group " ..
-				"'{self.name}' does not exist in previous experiment directory " ..
-				"'{args.prev_experiment_dir}'.")
-		else
-			args.input_dir = input_dir
-		end
-	end
-
 	self.logger  = lantern.event.logger(args)
 	self.tracker = lantern.event.progress_tracker(args)
 
@@ -78,8 +63,8 @@ end
 Registers the given `checkpointer` with this `event_group`.
 --]]
 function event_group:register_checkpointer(c)
-	c:register_object(self.logger.output_file_path)
-	c:register_object(self.tracker.output_file_path)
+	self.logger:register_checkpointer(c)
+	self.tracker:register_checkpointer(c)
 end
 
 --[[
@@ -99,4 +84,21 @@ function event_group:summarize()
 	for _, e in pairs(self.events) do
 		e:summarize()
 	end
+end
+
+--[[
+Flushes all updates that have been made logged to disk. If this `event_group` is associated with a
+data set, then this function should be probably called after each iteration.
+--]]
+function event_group:flush_updates()
+	self.logger:flush()
+end
+
+--[[
+Returns the list of metrics that have improved since the last call to `improved_metrics`, and
+flushes the latest table of the best recorded metrics to disk.
+--]]
+function event_group:improved_metrics()
+	self.tracker:flush()
+	return self.tracker:improved_metrics()
 end

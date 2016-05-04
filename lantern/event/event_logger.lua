@@ -68,6 +68,10 @@ function event_logger:initialize()
 	self.is_initialized = true
 end
 
+function event_logger:register_checkpointer(c)
+	-- TODO
+end
+
 --[[
 Overriden so that users can access the fields of the current event record corresponding to the
 events that have been added to this `event_logger`.

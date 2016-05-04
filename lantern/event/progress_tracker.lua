@@ -1,46 +1,38 @@
 local F = lantern.F
-local mp = lantern.mp
 local progress_tracker = torch.class('lantern.event.progress_tracker')
 
 function progress_tracker:__init(args)
 	assert(type(args.output_dir) == 'string')
-	local output_file_name = 'best_metrics.dat'
-	self.logger = args.logger
+	self.output_file_path = paths.concat(args.output_dir, 'best_metrics.t7')
 
-	if args.input_dir ~= nil then
-		assert(paths.dirp(args.input_dir))
-		local input_file_path = paths.concat(args.input_dir, output_file_name)
-
-		if not paths.filep(input_file_path) and self.logger ~= nil then
-			self.logger:log('/console/warning', "Directory {args.input_dir} exists, " ..
-				"but the file {input_file_path} does not.")
-		else
-			local f = io.open(input_file_path, 'r')
-			self.best_metrics = mp.unpack(f:read())
-			f:close()
-		end
+	if args.filep(output_file_path) then
+		self.best_metrics = torch.load(output_file_path)
+	else
+		self.best_metrics = {}
 	end
 
-	self.best_metrics = self.best_metrics or {}
+	self.logger = args.logger
 	self.improved_metrics = {}
 	self.improvement_funcs = {}
-
-	self.output_file_path = paths.concat(args.output_dir, output_file_name)
 end
 
 function progress_tracker:terminate()
 	self.output_file:close()
 end
 
+function progress_tracker:register_checkpointer(c)
+	-- TODO
+end
+
 function progress_tracker:register_metric(event_name, metric_name, improvement_func)
-	local key = F'{event_name}/{metric_name}'
+	local key = F'{event_name}.{metric_name}'
 
 	self.improved_metrics[key] = false
 	self.improvement_funcs[key] = improvement_func
 end
 
 function progress_tracker:update_metric(event_name, metric_name, value)
-	local key = F'{event_name}/{metric_name}'
+	local key = F'{event_name}.{metric_name}'
 	local old_value = self.best_metrics[key]
 
 	if old_value == nil then
@@ -57,10 +49,6 @@ function progress_tracker:update_metric(event_name, metric_name, value)
 end
 
 function progress_tracker:improved_metrics()
-	local f = io.open(output_file_path, 'w')
-	f:write(mp.pack(self.best_metrics))
-	f:close()
-
 	local metrics = {}
 
 	for k, v in improved_metrics do
@@ -71,4 +59,8 @@ function progress_tracker:improved_metrics()
 	end
 
 	return metrics
+end
+
+function progress_tracer:flush()
+	torch.save(self.output_file_path, self.best_metrics)
 end
