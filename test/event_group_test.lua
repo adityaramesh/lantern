@@ -24,8 +24,10 @@ function tests.test_event_group()
 		if i ~= iter_count then g:flush_updates() end
 	end
 
-	g:summarize()
+	local improved_metrics = g:summarize()
 	g:flush_updates()
+
+	tester:assert(improved_metrics.dummy_loss[1] == 'mean')
 
 	local proto_file = io.open(paths.concat(output_dir, 'dummy/event_record.pb2'), 'rb')
 	local def_str = proto_file:read('*a')
@@ -62,6 +64,8 @@ function tests.test_event_group()
 		off = off + 2 + len
 		count = count + 1
 	end
+
+	lt.remove_directory(test_dir)
 end
 
 return tester:add(tests):run()
