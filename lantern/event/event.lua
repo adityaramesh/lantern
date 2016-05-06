@@ -1,4 +1,4 @@
-local event = torch.class('lantern.event.event')
+local event = torch.class('lt.event')
 
 --[[
 Requied parameters:
@@ -16,7 +16,7 @@ Optional parameters:
 --]]
 function event:__init(args)
 	assert(type(args.name) == 'string')
-	assert(lantern.is_valid_name(args.name), lantern.invalid_name_msg("Event name"))
+	assert(lt.is_name_valid(args.name), lt.invalid_name_msg("Event name"))
 
 	self.name          = args.name
 	self.update_period = args.update_period or 1

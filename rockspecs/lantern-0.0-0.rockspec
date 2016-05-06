@@ -26,12 +26,24 @@ dependencies = {
 	-- OS
 	'luafilesystem',
 	'luaposix',
+
+	-- IO
+	'torch_dataflow',
+	--'protobuf',
 }
 
 build = {
 	type = 'builtin',
 	modules = {
-		['lt.init']        = 'lantern/init.lua',
-		['lt.event.proto'] = 'lantern/event/proto.lua',
+		['lt.init']               = 'lantern/init.lua',
+		['lt.utility.common']     = 'lantern/utility/common.lua',
+		['lt.utility.filesystem'] = 'lantern/utility/filesystem.lua',
+
+		['lt.event.proto']            = 'lantern/event/proto.lua',
+		['lt.event.event_logger']     = 'lantern/event/event_logger.lua',
+		['lt.event.progress_tracker'] = 'lantern/event/progress_tracker.lua',
+		['lt.event.event']            = 'lantern/event/event.lua',
+		['lt.event.event_group']      = 'lantern/event/event_group.lua',
+		['lt.event.loss']             = 'lantern/event/loss.lua',
 	}
 }
