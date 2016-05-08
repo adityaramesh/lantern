@@ -7,17 +7,19 @@ function loss:__init(args)
 end
 
 function loss:register_parent(group)
-	self.logger = group.logger
+	self.event_logger = group.event_logger
 	self.tracker = group.tracker
 
 	local fields = {
 		lt.field_definition{name = 'value', type = 'double'},
 		lt.field_definition{name = 'mean', type = 'double'},
 	}
-	self.logger:add_event(self.name, fields)
 
-	if self.track then
-		self.tracker:add_event(self.name, {mean = function (old, new) return new < old end})
+	self.event_logger:add_event(self:name(), fields)
+
+	if self.state.track then
+		self.tracker:add_event(self:name(), {mean = function (old, new)
+			return new < old end})
 	end
 end
 
@@ -25,7 +27,7 @@ function loss:update(args)
 	parent.update(self, args)
 
 	assert(type(args.value) == 'number')
-	self.logger[self.name].value = args.value
+	self.event_logger[self:name()].value = args.value
 
 	self.count = self.count + 1
 	self.total = self.total + args.value
@@ -35,8 +37,8 @@ function loss:summarize(args)
 	assert(self.count ~= 0)
 
 	local mean = self.total / self.count
-	self.logger[self.name].mean = mean
-	if self.track then self.tracker[self.name].mean = mean end
+	self.event_logger[self:name()].mean = mean
+	if self.state.track then self.tracker[self:name()].mean = mean end
 
 	self.total = 0
 	self.count = 0

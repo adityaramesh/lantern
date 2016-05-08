@@ -74,9 +74,12 @@ function event_logger:initialize()
 	end
 
 	local proto = self.message_def:to_proto()
-	local f = io.open(self.pb_def_file_path, 'w')
-	f:write(proto)
-	f:close()
+
+	if not paths.filep(self.pb_def_file_path) then
+		local f = io.open(self.pb_def_file_path, 'w')
+		f:write(proto)
+		f:close()
+	end
 
 	local def           = pb.load_proto(proto)
 	self.factory        = def.Wrapper.EventRecord

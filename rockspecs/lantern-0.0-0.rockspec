@@ -28,8 +28,8 @@ dependencies = {
 	'luaposix',
 
 	-- IO
-	'torch_dataflow',
 	--'protobuf',
+	'torch_dataflow',
 }
 
 build = {

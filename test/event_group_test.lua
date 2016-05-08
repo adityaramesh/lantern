@@ -1,10 +1,11 @@
 require('lt')
 require('totem')
 
+local F = lt.F
 local tests = totem.TestSuite()
 local tester = totem.Tester()
 
-function tests.test_event_group()
+function tests.test_logging_and_tracking()
 	local test_dir = 'scratch/dummy_experiment'
 	local output_dir = paths.concat(test_dir, 'current')
 
@@ -13,20 +14,19 @@ function tests.test_event_group()
 
 	local g = lt.event_group{name = 'dummy'}
 	g:add_event(lt.loss{name = 'dummy_loss'})
-	g:initialize{experiment_version_dir = output_dir}
+	g:initialize{cur_ver_dir = output_dir}
 
 	local iter_count = 10
 
 	for i = 1, iter_count do
-		g.logger.epoch = 1
-		g.logger.iteration = i
+		g.event_logger.epoch = 1
+		g.event_logger.iteration = i
 		g['dummy_loss']:update({epoch = 1, iteration = i, value = iter_count + 1 - i})
 		if i ~= iter_count then g:flush_updates() end
 	end
 
 	local improved_metrics = g:summarize()
 	g:flush_updates()
-
 	tester:assert(improved_metrics.dummy_loss[1] == 'mean')
 
 	local proto_file = io.open(paths.concat(output_dir, 'dummy/event_record.pb2'), 'rb')
@@ -65,6 +65,24 @@ function tests.test_event_group()
 		count = count + 1
 	end
 
+	lt.remove_directory(test_dir)
+end
+
+function tests.test_serialization()
+	local test_dir = 'scratch/dummy_experiment'
+	local output_dir = paths.concat(test_dir, 'current')
+
+	lt.make_directory_if_not_exists(test_dir)
+	lt.make_directory_if_not_exists(output_dir)
+
+	local g1 = lt.event_group{name = 'dummy'}
+	for i = 1, 3 do g1:add_event(lt.loss{name = F'loss_{i}'}) end
+
+	local test_file = paths.concat(output_dir, 'test.t7')
+	torch.save(test_file, g1)
+
+	local g2 = torch.load(test_file)
+	for i = 1, 3 do tester:assert(g2.state.name_to_event[F'loss_{i}'] ~= nil) end
 	lt.remove_directory(test_dir)
 end
 

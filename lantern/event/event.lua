@@ -1,4 +1,4 @@
-local event = torch.class('lt.event')
+local event = torch.class('lt.event', 'flow.serializable')
 
 --[[
 Requied parameters:
@@ -18,9 +18,19 @@ function event:__init(args)
 	assert(type(args.name) == 'string')
 	assert(lt.is_name_valid(args.name), lt.invalid_name_msg("Event name"))
 
-	self.name          = args.name
-	self.update_period = args.update_period or 1
-	self.track         = args.track or true
+	self.state = {
+		name          = args.name,
+		update_period = args.update_period or 1,
+		track         = args.track or true,
+	}
+end
+
+function event:name()
+	return self.state.name
+end
+
+function event:update_period()
+	return self.state.update_period
 end
 
 --[[
@@ -41,7 +51,7 @@ If this event generates performance metrics, then this method can be used to con
 values of these metrics are submitted to the `progress_tracker` of the parent `event_group`.
 --]]
 function event:track_progress(value)
-	self.track = value
+	self.state.track = value
 end
 
 --[[
@@ -54,7 +64,7 @@ function event:update(args)
 	assert(type(args.iteration) == 'number')
 	assert(args.iteration >= 1)
 
-	if args.iteration % self.update_period ~= 0 then return end
+	if args.iteration % self.state.update_period ~= 0 then return end
 end
 
 --[[

@@ -7,7 +7,8 @@ lt = {
 	lfs      = require('lfs'),
 	sys_stat = require('posix.sys.stat'),
 	
-	pb = require('pb'),
+	pb   = require('pb'),
+	flow = require('flow'),
 }
 
 torch.include('lt', 'utility/common.lua')
