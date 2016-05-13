@@ -1,5 +1,9 @@
-local F = lt.F
-local os = lt.os
+--[[
+Defines common utilties that are used throughout `lantern`.
+--]]
+
+local F   = lt.F
+local os  = lt.os
 local lfs = lt.lfs
 local ffi = lt.ffi
 
@@ -21,14 +25,4 @@ end
 function lt.invalid_name_msg(name)
 	return F"{identifier} should only contain letters, digits, periods, hyphens, and " ..
 		"underscores."
-end
-
-function lt.load_binary(path)
-	local size = lfs.attributes(path).size
-	local f = io.open(path, 'rb')
-	local buf = ffi.new('uint8_t[?]', size)
-
-	ffi.copy(buf, f:read(size), size)
-	f:close()
-	return ffi.string(buf, size)
 end

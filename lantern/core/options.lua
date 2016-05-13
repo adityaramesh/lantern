@@ -21,7 +21,7 @@ local function validate_options(options, logger)
 		"Option 'task' must be one of {'create', 'resume', 'replace'}.")
 
 	lantern.fail_if(not paths.dirp(options.experiment_root),
-		F"Experiment root {options.experiment_root} does not exist.")
+		F"Experiment root '{options.experiment_root}' does not exist.")
 
 	lantern.fail_if(string.len(options.experiment) == 0, "Experiment name must be provided.")
 
@@ -43,19 +43,36 @@ local function validate_options(options, logger)
 		options.version)
 
 	if options.task == 'create' then
-		lantern.fail_if(paths.dirp(exp_dir), F"Experiment directory {exp_dir} already " ..
-			"exists.")
+		lantern.fail_if(
+			paths.dirp(exp_dir),
+			F"Experiment directory '{exp_dir}' already exists.",
+			logger
+		)
+
 		lantern.make_directory(exp_dir)
 	elseif options.task == 'resume' then
-		lantern.fail_if(not paths.dirp(exp_dir), F"Experiment directory {exp_dir} does " ..
-			"not exist.")
-		lantern.fail_if(string.len(options.version) == 0, "Experiment version must be " ..
-			"provided.")
-		lantern.fail_if(not paths.dirp(exp_ver_dir), F"Experiment version {exp_ver_dir} " ..
-			"does not exist.")
+		lantern.fail_if(
+			not paths.dirp(exp_dir),
+			F"Experiment directory '{exp_dir}' does not exist.",
+			logger
+		)
+		lantern.fail_if(
+			string.len(options.version) == 0,
+			"Experiment version must be provided.",
+			logger
+		)
+		lantern.fail_if(
+			not paths.dirp(exp_ver_dir),
+			F"Experiment version '{exp_ver_dir}' does not exist.",
+			logger
+		)
 	elseif options.task == 'replace' then
-		lantern.fail_if(not paths.dirp(exp_dir), F"Experiment directory {exp_dir} does " ..
-			"not exist.")
+		lantern.fail_if(
+			not paths.dirp(exp_dir),
+			F"Experiment directory '{exp_dir}' does not exist.",
+			logger
+		)
+
 		lantern.remove_directory(exp_dir)
 		lantern.make_directory(exp_dir)
 	end

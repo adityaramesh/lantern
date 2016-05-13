@@ -2,8 +2,8 @@
 Defines common filesystem utility functions with built-in error checking.
 --]]
 
-local F = lt.F
-local os = lt.os
+local F   = lt.F
+local os  = lt.os
 local lfs = lt.lfs
 
 function lt.remove_file(path, logger)
@@ -69,4 +69,17 @@ end
 function lt.remove_directory_if_exists(dir, logger)
 	if not paths.dirp(dir) then return end
 	lt.remove_directory(dir, logger)
+end
+
+--[[
+Checks if both paths refer to the same underlying file by following all links.
+--]]
+function lt.is_same_file(src_path, dst_path, logger)
+	local src_info, src_err = sys_stat.stat(src_path)
+	lt.fail_if(src_info == nil, F"Failed to stat file '{src_path}': {src_err}.", logger)
+
+	local dst_info, dst_err = sys_stat.stat(dst_path)
+	lt.fail_if(dst_info == nil, F"Failed to stat file '{dst_path}': {dst_err}.", logger)
+
+	return src_info.st_dev == dst_info.st_dev and src_info.st_ino == dst_info.st_ino
 end

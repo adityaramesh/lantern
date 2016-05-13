@@ -21,7 +21,7 @@ function event_group:__init(args)
 		name_to_event = {}
 	}
 
-	self.is_initialized = false
+	self:initialize()
 end
 
 function event_group:name()
@@ -41,18 +41,25 @@ end
 
 --[[
 Parameters:
-* `args.cur_ver_dir`: Path to Directory intended to contain the results of the current version of
+* `args.cur_ver_dir`: Path to directory intended to contain the results of the current version of
   the experiment (e.g. the `current` subdirectory within the root directory for this experiment).
 
 **Note:** if the description for `args.cur_ver_dir` is updated, also update the one in
-`lantern/event/event_group.lua`.
+`lantern/event/checkpointer.lua`.
 --]]
 function event_group:initialize(args)
 	--[[
-	`initialize` is also called without argument as part of the deserialization process, but we
-	have nothing to do in this case.
+	This branch is taken in two situations:
+	1. A new `event_group` has been constructed.
+	2. An `event_group` has been deserialized.
+
+	The `initialize` function still needs to be called again, with the required parameters
+	provided in `args`.
 	--]]
-	if args == nil then return end
+	if args == nil then
+		self.is_initialized = false
+		return
+	end
 
 	assert(not self.is_initialized, "Event group has already been initialized.")
 	assert(paths.dirp(args.cur_ver_dir), "Directory '{args.cur_ver_dir}' for the current " ..
@@ -70,7 +77,6 @@ function event_group:initialize(args)
 	end
 
 	self.event_logger:initialize()
-	self.tracker:initialize()
 	self.is_initialized = true
 end
 

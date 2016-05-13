@@ -13,6 +13,7 @@ lt = {
 
 torch.include('lt', 'utility/common.lua')
 torch.include('lt', 'utility/filesystem.lua')
+torch.include('lt', 'utility/serializable.lua')
 
 torch.include('lt', 'event/proto.lua')
 torch.include('lt', 'event/event_logger.lua')

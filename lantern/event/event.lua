@@ -1,4 +1,4 @@
-local event = torch.class('lt.event', 'flow.serializable')
+local event = torch.class('lt.event', 'lt.serializable')
 
 --[[
 Requied parameters:
@@ -6,13 +6,14 @@ Requied parameters:
 
 Optional parameters:
 * `args.update_period`: Period in iterations at which updates are produced (default is 1). If the
-  current iteration is not divisible by `args.update_period, then `update` effectively does nothing.
-  This parameter is useful for amortizing the space and time costs of events that generate large
-  volumes of data each time `update` is called.
+  current iteration is not divisible by `args.update_period, then calling `update` effectively does
+  nothing. This parameter is useful for amortizing the space and time costs of events that generate
+  large volumes of data for each update.
 * `args.track`: If this event generates performance metrics (e.g. accuracy) and a `progress_tracker`
   is registered with it, then this parameter controls whether updates to these metrics are
   submitted to the `progress_tracker`. This is useful if, for instance, one wishes to monitor the
   value of a metric without having it influence the checkpointing process.
+* `args.logger`: If provided, used by the derived class to log exceptional events.
 --]]
 function event:__init(args)
 	assert(type(args.name) == 'string')
@@ -22,6 +23,7 @@ function event:__init(args)
 		name          = args.name,
 		update_period = args.update_period or 1,
 		track         = args.track or true,
+		logger        = args.logger,
 	}
 end
 
@@ -36,12 +38,12 @@ end
 --[[
 Registers the given `event_group` with this `event`. The `event_group` provides all events owned by
 it with the following information:
-* The logger.
+* The `event_logger`.
 * The `progress_tracker`.
-* The name of the directory to which the outputs of the `event_group` are written.
+* The name of the directory to which the output of the `event_group` are written.
 
-Note: this method should be oevrriden by the derived class in order to prepare the logger and
-`progress_tracker` associated with the `event_group` to receive the information that will be
+Note: this method should be oevrriden by the derived class in order to prepare the `event_logger`
+and `progress_tracker` associated with the `event_group` to receive the information that will be
 provided by this event.
 --]]
 function event:register_parent(group) end
@@ -64,7 +66,8 @@ function event:update(args)
 	assert(type(args.iteration) == 'number')
 	assert(args.iteration >= 1)
 
-	if args.iteration % self.state.update_period ~= 0 then return end
+	if args.iteration % self.state.update_period ~= 0 then return false end
+	return true
 end
 
 --[[
