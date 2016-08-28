@@ -1,25 +1,34 @@
 lt = {
-	F   = require('F'),
-	fun = require('fun'),
-	ffi = require('ffi'),
+	F    = require('F'),
+	xlua = require('xlua'),
 
-	os       = require('os'),
-	lfs      = require('lfs'),
-	sys_stat = require('posix.sys.stat'),
-	
-	pb   = require('pb'),
-	flow = require('flow'),
+	io   = require('io'),
+	os   = require('os'),
+	lfs  = require('lfs'),
+	term = require('term'),
+	path = require('pl.path'),
+
+	cutorch = require('cutorch'),
+	optim   = require('optim'),
 }
 
-torch.include('lt', 'utility/common.lua')
-torch.include('lt', 'utility/filesystem.lua')
-torch.include('lt', 'utility/serializable.lua')
+-- Common utilities.
+require('lantern/common')
+require('lantern/filesystem')
+require('lantern/serializable')
+require('lantern/tty_logger')
+require('lantern/json_logger')
+require('lantern/options')
 
-torch.include('lt', 'event/proto.lua')
-torch.include('lt', 'event/event_logger.lua')
-torch.include('lt', 'event/progress_tracker.lua')
-torch.include('lt', 'event/event.lua')
-torch.include('lt', 'event/event_group.lua')
-torch.include('lt', 'event/loss.lua')
+-- Optimizers.
+require('lantern/schedule')
+require('lantern/optimizer_base')
+require('lantern/adam')
+require('lantern/sgu')
+
+-- Core utilities.
+require('lantern/state')
+require('lantern/checkpointer')
+require('lantern/model_base')
 
 return lt
