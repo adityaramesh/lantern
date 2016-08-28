@@ -8,9 +8,31 @@ lt = {
 	term = require('term'),
 	path = require('pl.path'),
 
-	cutorch = require('cutorch'),
-	optim   = require('optim'),
+	nn    = require('nn'),
+	optim = require('optim'),
 }
+
+local try_require = function(name)
+	local success, lib = pcall(function() return require(name) end)
+	return {success, lib}
+end
+
+local cuda_libs = {
+	cutorch = try_require('cutorch'),
+	cunn    = try_require('cunn'),
+	cudnn   = try_require('cudnn'),
+}
+
+for lib, info in pairs(cuda_libs) do
+	if info[1] then lt[lib] = info[2] end
+end
+
+-- Questionable if we should be doing this by default.
+if lt.cudnn then
+	lt.cudnn.benchmark = true
+	lt.cudnn.fastest = true
+	--lt.cudnn.verbose = true
+end
 
 -- Common utilities.
 require('lantern/common')

@@ -1,10 +1,21 @@
+--[[
+TODO compatibility with non-GPU mode.
+--]]
+
 local bit32 = require('bit32')
-local nn    = require('nn')
-local cunn  = require('cunn')
-local cudnn = require('cudnn')
+
+local nn      = lt.nn
+local cunn    = lt.cunn
+local cudnn   = lt.cudnn
+local cutorch = lt.cutorch
 
 local model, parent = torch.class('model', 'lt.model_base')
 
+--[[
+Arguments:
+- `input_size`: `LongTensor` describing the size of the input image.
+- `class_count`: Number of classes.
+--]]
 function model:__init(args)
 	parent.__init(self, args)
 
@@ -13,7 +24,7 @@ function model:__init(args)
 	end
 
 	local function is_power_of_two(n)
-		assert is_integer(n)
+		assert(is_integer(n))
 		return bit32.band(n, n - 1) == 0
 	end
 
@@ -22,7 +33,7 @@ function model:__init(args)
 	end
 
 	local function log_2(n)
-		assert is_integer(n)
+		assert(is_integer(n))
 		return round(math.log(n) / math.log(2))
 	end
 
@@ -35,7 +46,7 @@ function model:__init(args)
 
 	assert(channel_count >= 1)
 	assert(image_width == args.input_size[3])
-	assert(image_width > 4 and is_power_of_two(image_width))
+	assert(image_width >= 8 and is_power_of_two(image_width))
 
 	local conv = function(...)
 		local m = cudnn.SpatialConvolution(...)
@@ -65,15 +76,15 @@ function model:__init(args)
 
 		if not is_input_block then
 			residual_path
-				:add(cudnn.BatchNormalization(n_in))
+				:add(cudnn.SpatialBatchNormalization(n_in))
 				:add(nn.LeakyReLU(0.2, true))
 		end
 
 		residual_path
-			:add(conv(n_in, n_out))
-			:add(cudnn.BatchNormalization(n_out))
-			:add(cudnn.LeakyReLU(0.2, true))
-			:add(conv(n_out, n_out))
+			:add(conv(n_in, n_out, 3, 3, 1, 1, 1, 1))
+			:add(cudnn.SpatialBatchNormalization(n_out))
+			:add(nn.LeakyReLU(0.2, true))
+			:add(conv(n_out, n_out, 3, 3, 2, 2, 1, 1))
 
 		return nn.Sequential()
 			:add(nn.ConcatTable()
@@ -84,15 +95,16 @@ function model:__init(args)
 
 	local make_output_block = function(n_in)
 		return nn.Sequential()
-			:add(cudnn.BatchNormalization(n_in))
+			:add(cudnn.SpatialBatchNormalization(n_in))
 			:add(nn.LeakyReLU(0.2, true))
 			:add(conv(n_in, class_count, 4, 4))
-			:add(cudnn.Softmax())
+			:add(nn.View(-1, class_count))
+			:add(cudnn.LogSoftMax())
 	end
 
 	local fm_count    = 64
-	local block_count = log_2(image_width)
-	assert block_count >= 2
+	local block_count = log_2(image_width) - 1
+	assert(block_count >= 2)
 
 	local m = nn.Sequential()
 	m:add(make_block(channel_count, fm_count, true))

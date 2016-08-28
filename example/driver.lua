@@ -3,25 +3,20 @@ TODO: check that this works in CPU and GPU mode.
 --]]
 
 local F       = lt.F
+local nn      = lt.nn
+local cunn    = lt.cunn
+local cudnn   = lt.cudnn
 local cutorch = lt.cutorch
 
-local nn    = require('nn')
-local cunn  = require('cunn')
-local cudnn = require('cudnn')
-
-if cudnn then
-	cudnn.benchmark = true
-	cudnn.fastest = true
-	--cudnn.verbose = true
-end
+require('example/data_sampler')
 
 local function make_evaluator(args)
 	return function(_)
 		args.model:grad_parameters():zero()
 
 		local preds     = args.model:forward(args.images)
-		local loss      = args.crit:forward(args.images, args.labels)
-		local grad_loss = args.crit:backward(args.images, args.labels)
+		local loss      = args.crit:forward(preds, args.labels)
+		local grad_loss = args.crit:backward(preds, args.labels)
 
 		args.model:backward(args.images, grad_loss)
 		return nil, args.model:grad_parameters()
@@ -29,7 +24,20 @@ local function make_evaluator(args)
 end
 
 --[[
-TODO: document the arguments that this function accepts.
+Required arguments:
+- `experiment_dir`: Path to the directory in which to save the current results.
+- `train_data`: Table with two keys, `inputs` and `targets`.
+- `test_data`: Table with two keys, `inputs` and `targets`.
+- `class_count`: Number of classes.
+- `make_model`: Function that returns a newly-created model when given the input size and logger.
+- `gpu`: GPU ordinal (must be greater than or equal to one).
+
+Optional arguments:
+- `batch_size`: Defaults to 64.
+- `max_epochs`: Defaults to 10,000.
+- `iters_per_epoch`: Defaults to `math.ceil(data_size / batch_size)`.
+- `iters_per_sync`: Defaults to `math.floor(iters_per_epoch / 100)`.
+- `make_optimizer`: Defaults to Adam.
 --]]
 function lt.run(args)
 	local tl = args.logger or lt.tty_logger()
@@ -47,11 +55,11 @@ function lt.run(args)
 
 	if cutorch then cutorch.setDevice(args.gpu) end
 
-	local data_size        = args.data.inputs:size()
-	local batch_size       = args.batch_size       or 64
-	local max_epochs       = args.max_epochs       or 10000
-	local iters_per_epoch  = args.iters_per_epoch  or math.ceil(data_size[1] / batch_size)
-	local iters_per_sync   = args.iters_per_sync   or math.floor(iters_per_epoch / 100)
+	local data_size        = args.train_data.inputs:size()
+	local batch_size       = args.batch_size      or 64
+	local max_epochs       = args.max_epochs      or 10000
+	local iters_per_epoch  = args.iters_per_epoch or math.ceil(data_size[1] / batch_size)
+	local iters_per_sync   = args.iters_per_sync  or math.floor(iters_per_epoch / 100)
 
 	assert(iters_per_sync >= 2 and iters_per_sync <= iters_per_epoch)
 
@@ -64,10 +72,13 @@ function lt.run(args)
 	local image_size = torch.LongStorage(#data_size - 1)
 	for i = 2, #data_size do image_size[i - 1] = data_size[i] end
 
+	assert(args.class_count >= 2)
+
 	-- Note: the state should be constructed before everything else, so that any use of random
 	-- number generation (e.g. to initialize weights) is reproducible.
 	local state  = cp.global_rng_state or lt.global_rng_state{}
-	local model  = cp.model or args.make_model{input_size = image_size, logger = tl}
+	local model  = cp.model or args.make_model{input_size = image_size,
+		class_count = args.class_count, logger = tl}
 	local params = model:parameters()
 
 	-- Invokes a factory function if it was provided by the user, and supplies extra arguments
@@ -81,8 +92,7 @@ function lt.run(args)
 	                          	tensor_size = params:size(),
 					logger      = tl
 	                    }) or lt.adam{
-	                           	step_size   = 2e-4,
-					beta_1      = 0.5,
+	                           	step_size   = 1e-3,
 	                           	tensor_type = params:type(),
 	                            	tensor_size = params:size(),
 	                            	logger      = tl
@@ -119,8 +129,8 @@ function lt.run(args)
 		return tensor_type(size)
 	end
 
-	local image_buffer = make_buffer(args.data.inputs)
-	local label_buffer = make_buffer(args.data.targets)
+	local image_buffer = make_buffer(args.train_data.inputs)
+	local label_buffer = make_buffer(args.train_data.targets)
 
 	local eval_args = {
 		model      = model,
@@ -140,7 +150,8 @@ function lt.run(args)
 	for epoch = cur_epoch, max_epochs do
 		tl:log('/console/info', F"Starting epoch {epoch}.")
 
-		-- TODO make data sampler
+		local sampler = data_sampler(args.train_data.inputs, args.train_data.targets,
+			image_buffer, label_buffer, iters_per_epoch)
 
 		local epoch_timer = torch.Timer()
 		local iter_timer  = torch.Timer()
@@ -168,8 +179,7 @@ function lt.run(args)
 				iter_timer:resume()
 			end
 
-			-- TODO invoke data sampler (make this actually do something meaningful)
-			--sampler()
+			sampler()
 
 			if sync then
 				cutorch.synchronize()
@@ -178,7 +188,7 @@ function lt.run(args)
 				iter_timer:resume()
 			end
 
-			opt:update(model_params, eval)
+			opt:update(params, eval)
 
 			--[[
 			In case the model needs to do things like zero out or renormalize certain
@@ -242,10 +252,10 @@ function lt.run(args)
 		jl:flush()
 
 		cp:update(epoch, {
-			model  = model,
-			opt    = opt,
-			state  = state,
-			logger = jl,
+			model            = model,
+			optimizer        = opt,
+			global_rng_state = state,
+			logger           = jl,
 		})
 	end
 end
