@@ -5,8 +5,8 @@ Torch. Here is an abbreviated list of features:
 
 - [Predefined command-line options](lantern/options.lua) to make it easy to start and resume
   experiments.
-- [A checkpointer](lantern/checkpointer.lua) that maintains the states of a list of specified
-  objects on the disk.
+- [A checkpointer](lantern/checkpointer.lua) that maintains the states of the objects in a specified
+  list on the disk.
 - [A base class for models](lantern/model_base.lua) that automatically frees unnecessary storage and
   transfers parameters to the CPU when the model is written to disk.
 - [A JSON logger](lantern/json_logger.lua) to allow for easy monitoring and analysis of data from
