@@ -33,13 +33,21 @@ code.
 
 # Running the Example
 
-TODO: write this section
+First, you will need to download the example code and preprocessed data:
+
+	git clone https://github.com/adityaramesh/lantern
+	cd lantern
+	chmod +x examples/download_data.sh
+	./examples/download_data.sh
+
+Now you can begin training the classifier as follows:
+
+	mkdir experiments
+	th example/train_classifier.lua -task create -experiment test
 
 TODO: link to a document with more information about details in Lantern
 
 # TODO
 
 - Check for non-GPU compatibility.
-- Verify that fresh installation works.
-- Way to download MNIST data required to run the training script (use GH releases).
 - Finish documentation.
