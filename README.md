@@ -48,7 +48,7 @@ Now you can begin training the classifier as follows:
 Henceforth, attempting to rerun the training script using the same options will fail. Instead, you
 have two options:
 
-- Use `-task resume`, which will resume training from the start of the first unfinished epoch.
+- Use `-task resume`, which will resume training from the start of the last unfinished epoch.
 - Use `-task replace`, which will **purge all data** from previous runs and train a new model from
   scratch.
 
