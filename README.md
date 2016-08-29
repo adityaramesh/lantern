@@ -43,11 +43,14 @@ First, you will need to download the example code and preprocessed data:
 Now you can begin training the classifier as follows:
 
 	mkdir experiments
-	th example/train_classifier.lua -task create -experiment test
+	th example/train_classifier.lua -task create -experiment test -gpu 1
 
-TODO: link to a document with more information about details in Lantern
+Henceforth, attempting to rerun the training script using the same options will fail. Instead, you
+have two options:
 
-# TODO
+- Use `-task resume`, which will resume training from the start of the first unfinished epoch.
+- Use `-task replace`, which will **purge all data** from previous runs and train a new model from
+  scratch.
 
-- Check for non-GPU compatibility.
-- Finish documentation.
+You can change the relative paht to the root directory for experiments using the option
+`-experiment_root`, which defaults to `experiments`.
