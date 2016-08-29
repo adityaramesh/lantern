@@ -130,7 +130,7 @@ function model:__init(args)
 
 	self.state.module = m
 	parent.initialize(self)
-	m:cuda()
+	if cutorch then m:cuda() end
 end
 
 function model:notify_post_update()

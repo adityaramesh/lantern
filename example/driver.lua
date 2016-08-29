@@ -165,14 +165,22 @@ function lt.run(args)
 	if cp:last_epoch() then cur_epoch = cp:last_epoch() + 1
 	else cur_epoch = 1 end
 
-	local tensor_type
-	if cutorch then tensor_type = torch.CudaTensor
-	else tensor_type = torch.FloatTensor end
-
 	local make_buffer = function(data)
+		local tensor_type
+
+		if cutorch then
+			tensor_type = torch.CudaTensor
+		elseif data:type() == 'torch.FloatTensor' then
+			tensor_type = torch.DoubleTensor
+		elseif data:type() == 'torch.ByteTensor' or tensor_type == 'torch.IntTensor' then
+			tensor_type = torch.LongTensor
+		else
+			tensor_type = torch.factory(data:type())
+		end
+
 		local size = data:size()
 		size[1] = batch_size
-		return tensor_type(size)
+		return tensor_type():resize(size)
 	end
 
 	local image_buffer = make_buffer(args.train_data.inputs)
