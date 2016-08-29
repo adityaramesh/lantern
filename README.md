@@ -1,7 +1,7 @@
 # Overview
 
-Lantern provides a set of utilities that are useful for writing maintainable, robust, and efficient,
-training scripts in Torch. Here is an abbreviated list of features:
+Lantern provides utilities for writing maintainable, robust, and efficient, training scripts in
+Torch. Here is an abbreviated list of features:
 
 - [Predefined command-line options](lantern/options.lua) to make it easy to start and resume
   experiments.
@@ -52,5 +52,5 @@ have two options:
 - Use `-task replace`, which will **purge all data** from previous runs and train a new model from
   scratch.
 
-You can change the relative paht to the root directory for experiments using the option
+You can change the relative path to the root directory for experiments using the option
 `-experiment_root`, which defaults to `experiments`.
