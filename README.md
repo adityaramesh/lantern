@@ -1,6 +1,6 @@
 # Overview
 
-Lantern provides utilities for writing maintainable, robust, and efficient, training scripts in
+Lantern provides utilities for writing maintainable, robust, and efficient training scripts in
 Torch. Here is an abbreviated list of features:
 
 - [Predefined command-line options](lantern/options.lua) to make it easy to start and resume
