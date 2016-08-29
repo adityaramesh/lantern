@@ -29,8 +29,10 @@ local function reshape_if_required(inputs)
 	end
 end
 
-reshape_if_required(train_data.inputs)
-reshape_if_required(test_data.inputs)
+for _, data in pairs{train_data, test_data} do
+	reshape_if_required(data.inputs)
+	data.targets:add(1)
+end
 
 lt.run{
 	gpu            = options.gpu,

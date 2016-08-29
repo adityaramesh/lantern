@@ -1,4 +1,8 @@
 --[[
+A simple ResNet image classifier.
+--]]
+
+--[[
 TODO compatibility with non-GPU mode.
 --]]
 
@@ -48,11 +52,20 @@ function model:__init(args)
 	assert(image_width == args.input_size[3])
 	assert(image_width >= 8 and is_power_of_two(image_width))
 
+	local try_cudnn = function(class)
+		if cudnn and cudnn[class] then return cudnn[class] end
+		return nn[class]
+	end
+
 	local conv = function(...)
-		local m = cudnn.SpatialConvolution(...)
+		local m = try_cudnn('SpatialConvolution')(...)
 		m.bias, m.gradBias = nil, nil
 		return m
 	end
+
+	local pool        = try_cudnn('SpatialMaxPooling')
+	local bn          = try_cudnn('SpatialBatchNormalization')
+	local log_softmax = try_cudnn('LogSoftMax')
 
 	local function make_block(n_in, n_out, is_input_block)
 		if is_input_block == nil then
@@ -68,7 +81,7 @@ function model:__init(args)
 		else
 			dw_in = 2
 			main_path = nn.Sequential()
-				:add(cudnn.SpatialMaxPooling(2, 2, 2, 2))
+				:add(pool(2, 2, 2, 2))
 				:add(conv(n_in, n_out, 1, 1))
 		end
 
@@ -76,13 +89,13 @@ function model:__init(args)
 
 		if not is_input_block then
 			residual_path
-				:add(cudnn.SpatialBatchNormalization(n_in))
+				:add(bn(n_in))
 				:add(nn.LeakyReLU(0.2, true))
 		end
 
 		residual_path
 			:add(conv(n_in, n_out, 3, 3, 1, 1, 1, 1))
-			:add(cudnn.SpatialBatchNormalization(n_out))
+			:add(bn(n_out))
 			:add(nn.LeakyReLU(0.2, true))
 			:add(conv(n_out, n_out, 3, 3, 2, 2, 1, 1))
 
@@ -95,11 +108,11 @@ function model:__init(args)
 
 	local make_output_block = function(n_in)
 		return nn.Sequential()
-			:add(cudnn.SpatialBatchNormalization(n_in))
+			:add(bn(n_in))
 			:add(nn.LeakyReLU(0.2, true))
 			:add(conv(n_in, class_count, 4, 4))
 			:add(nn.View(-1, class_count))
-			:add(cudnn.LogSoftMax())
+			:add(log_softmax())
 	end
 
 	local fm_count    = 64

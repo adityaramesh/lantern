@@ -43,8 +43,8 @@ build = {
 		['lt.adam']           = 'lantern/adam.lua',
 		['lt.sgu']            = 'lantern/sgu.lua',
 
-		['lt.state']          = 'lantern/state.lua',
-		['lt.checkpointer']   = 'lantern/checkpointer.lua',
-		['lt.model_base']     = 'lantern/model_base.lua',
+		['lt.global_rng_state'] = 'lantern/global_rng_state.lua',
+		['lt.checkpointer']     = 'lantern/checkpointer.lua',
+		['lt.model_base']       = 'lantern/model_base.lua',
 	}
 }

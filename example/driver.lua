@@ -13,14 +13,55 @@ require('example/data_sampler')
 local function make_evaluator(args)
 	return function(_)
 		args.model:grad_parameters():zero()
+		local input_count = args.images:size(1)
 
 		local preds     = args.model:forward(args.images)
 		local loss      = args.crit:forward(preds, args.labels)
 		local grad_loss = args.crit:backward(preds, args.labels)
 
+		_, pred_classes = torch.max(preds, 2)
+
+		args.total_correct = args.total_correct + torch.sum(torch.eq(
+			pred_classes:view(args.batch_size), args.labels))
+		args.total_seen = args.total_seen + input_count
+
 		args.model:backward(args.images, grad_loss)
-		return nil, args.model:grad_parameters()
+		args.model:grad_parameters():div(input_count)
+		return loss, args.model:grad_parameters()
 	end
+end
+
+local function compute_test_accuracy(args)
+	local input_count = args.images:size(1)
+	local batch_size  = args.batch_size
+	local iter_count  = math.ceil(input_count / batch_size)
+
+	local total_seen = 0
+	local total_correct = 0
+
+	for iter = 1, iter_count do
+		local a = (iter - 1) * batch_size + 1
+		local b = math.min(input_count, iter * batch_size)
+		local count = b - a + 1
+
+		local inputs = args.image_buffer[{{1, count}}]
+		local targets = args.label_buffer[{{1, count}}]
+
+		inputs:copy(args.images[{{a, b}}])
+		targets:copy(args.labels[{{a, b}}])
+
+		local preds = args.model:forward(inputs)
+		_, pred_classes = torch.max(preds, 2)
+
+		total_correct = total_correct + torch.sum(torch.eq(
+			pred_classes:view(count), targets))
+		total_seen = total_seen + count
+
+		args.logger:log('/progress', {current = iter, total = iter_count})
+	end
+
+	assert(total_seen == input_count)
+	return total_correct / total_seen
 end
 
 --[[
@@ -37,6 +78,7 @@ Optional arguments:
 - `max_epochs`: Defaults to 10,000.
 - `iters_per_epoch`: Defaults to `math.ceil(data_size / batch_size)`.
 - `iters_per_sync`: Defaults to `math.floor(iters_per_epoch / 100)`.
+- `iters_per_val`: Defaults to five.
 - `make_optimizer`: Defaults to Adam.
 --]]
 function lt.run(args)
@@ -60,6 +102,7 @@ function lt.run(args)
 	local max_epochs       = args.max_epochs      or 10000
 	local iters_per_epoch  = args.iters_per_epoch or math.ceil(data_size[1] / batch_size)
 	local iters_per_sync   = args.iters_per_sync  or math.floor(iters_per_epoch / 100)
+	local iters_per_val    = args.iters_per_val   or 5
 
 	assert(iters_per_sync >= 2 and iters_per_sync <= iters_per_epoch)
 
@@ -112,6 +155,9 @@ function lt.run(args)
 			'update_time',
 			'avg_iter_time',
 			'epoch_time',
+
+			'train_acc',
+			'test_acc',
 		}
 	}
 
@@ -132,7 +178,7 @@ function lt.run(args)
 	local image_buffer = make_buffer(args.train_data.inputs)
 	local label_buffer = make_buffer(args.train_data.targets)
 
-	local eval_args = {
+	local train_args = {
 		model      = model,
 		crit       = crit,
 		opt        = opt,
@@ -141,10 +187,24 @@ function lt.run(args)
 
 		images = image_buffer,
 		labels = label_buffer,
-		iter_counter = 1,
+
+		total_correct = 0,
+		total_seen = 0,
 	}
 
-	local eval = make_evaluator(eval_args)
+	local test_args = {
+		model      = model,
+		logger     = tl,
+		batch_size = batch_size,
+
+		images = args.test_data.inputs,
+		labels = args.test_data.targets,
+
+		image_buffer = image_buffer,
+		label_buffer = label_buffer,
+	}
+
+	local eval = make_evaluator(train_args)
 	model:training()
 
 	for epoch = cur_epoch, max_epochs do
@@ -247,7 +307,26 @@ function lt.run(args)
 		end
 
 		epoch_timer:stop()
+
+		local train_acc = train_args.total_correct / train_args.total_seen
+		train_args.total_correct = 0
+		train_args.total_seen = 0
+
 		jl.epoch_time = epoch_timer:time().real
+		jl.train_acc = train_acc
+		tl:log('/console/info', F"Train accuracy: {100 * train_acc}%.")
+
+		if epoch == 1 or (epoch - 1) % iters_per_val == 0 then
+			tl:log('/console/info', "Starting test epoch.")
+
+			model:evaluate()
+			local test_acc = compute_test_accuracy(test_args)
+			model:training()
+
+			jl.test_acc = test_acc
+			tl:log('/console/info', F"Test accuracy: {100 * test_acc}%.")
+		end
+
 		jl:commit()
 		jl:flush()
 

@@ -1,130 +1,45 @@
 # Overview
 
-Lantern makes it easy to train models in Torch and monitor real-time performance statistics without
-having to write any boilerplate code.
+Lantern provides a set of utilities that are useful for writing maintainable, robust, and efficient,
+training scripts in Torch. Here is an abbreviated list of features:
 
-# Agenda
+- [Predefined command-line options](lantern/options.lua) to make it easy to start and resume
+  experiments.
+- [A checkpointer](lantern/checkpointer.lua) that maintains the states of a list of specified
+  objects on the disk.
+- [A base class for models](lantern/model_base.lua) that automatically frees unnecessary storage and
+  transfers parameters to the CPU when the model is written to disk.
+- [A JSON logger](lantern/json_logger.lua) to allow for easy monitoring and analysis of data from
+  experiments.
 
-Put this in the driver:
+Starting a project using Lantern typically involves three steps. We have provided a working example
+of an MNIST classifier in the `examples` directory for your reference. [This section](#Running the
+Example) describes how to get it running.
 
-	--[[
-	All classes in lantern use local RNGs instead of the global ones, but we seed the global
-	RNGs anyway, so that third-party functions that rely on random-number generation (including
-	those in Torch) yield reproducible results.
-	--]]
-	torch.manualSeed(1)
-	cutorch.manualSeed(1)
+1. Define the model (see [this file](examples/model.lua) for reference).
+2. Write a driver script to train the model (see [this file](examples/driver.lua) for reference; if
+   you are training a classifier, this example script may already be sufficient for your purposes).
+3. Write a "front-end" script to be invoked from the command-line (see [this
+   file](examples/train_classifier.lua) for reference). 
 
-- Change `progress_tracker` so that it inherits from serializable instead of saving the metrics
-  separately.
-- Rethink whether we actually need to back up files, since all files will be suffixed by the eopch
-  number anyway.
-- Change things so that ALL versions of objects are suffixed by `_epoch_<n>`, instead of modifying
-  the backup extension.
-- Change `update_strategy` to `aggregate` or `replace`: the update method now pertains to the way in
-  which the version of the file from the previous epoch is dealt with, which is a more modular way
-  of doing things than specifying how the contents of the files are accumulated.
+The model, driver, and front-end scripts are usually independent components of any given experiment.
+Separating these components allows different versions of each to be developed over time, without the
+maintainability of the project being compromised by many slightly different versions of the same
+code.
 
-- Key idea for new checkpointer: restore all files to `current` subdirectory, similar to git branch,
-  rather than manually loading the files from the version of the experiment from which we wish to
-  resume.
-- More changes:
-  - Checkpointer must accept update and post-update functions, so that objects that use incremental
-    write stategies have a chance to reopen handles to the files after they are closed in the update
-    function.
-  - Switch the logger to a new file every epoch in order to implement the incremental strategy.
+# Installation
 
-Part 2: update driver.
-- [ ] `stopping_criteria.lua`
-- [ ] `driver.lua` and test
-- [ ] Update optimizers to use new logging API
+	luarocks install https://raw.githubusercontent.com/adityaramesh/lantern/master/rockspecs/lantern-0.0-1.rockspec
 
-- [ ] Pipe stdout and stderr for lantern to the log file, if it is provided.
-- [ ] Make the optimizer and driver store private dummy events that they add to the event groups
-  provided by the user. This makes the output of the progress tracker the most natural (e.g.
-  `adadelta_lm/grad_norm`, `driver/model_eval_time`. etc.)
-- [ ] Following the suggestion above, design events so that a single event logs a lot of information
-  associated with the phenomenon it is designed to track, rather than forcing each event to log a
-  single statistic.
-  - Full path for metrics: `event_group/event/metric` (e.g. `validation/confusion/accuracy`).
+# Running the Example
 
-- [x] Revised default options.
-  - Things to include: task, experiment, version ('current' or best associated with a particular
-    metric), `experiment_root` (default: `./experiments`).
-  - We use separate scripts for training and evaluation, so the only options for `task` should be
-    `create`, `resume`, and `replace`.
+TODO: write this section
 
-- [ ] Event API.
-  - [ ] `confusion.lua` (not an event, but common object used by events related to accuracy).
-    - Balanced accuracy: weighting by inverse frequency (`f_k := t_k / N`) is equivalent to
-      weighting by `1 / t_k`, which reduces to regular accuracy in the case where all classes have
-      the same number of instances.
-    - Visualize the class-conditional distribution using a donut.
+TODO: link to a document with more information about details in Lantern
 
-- [ ] Checkpointer class.
-  - The checkpointer should have a function to restore the state of a checkpoint that is different
-    from `current` within the `current` directory, replacing the previous contents. This function
-    should be used by the driver if the specified model version is not `current`. This makes it
-    easier to set up many of the classes used by the driver, such as the event logger.
-  - Support for incremental files, like the ones generated by the event logger, which can consist of
-    many parts.
-  - Put this in `core` or `event`?
-  - `<experiment_name>/current/{files}` or
-    `<experiment_name>/best_<event_group>/best_<event_name>/{files}`, where `{files}` consists of:
-      - `event_data.dat` (measurements from each event group; messagepack format)
-        - This file also contains non-numeric data like images and audio in binary format. They are
-	  not written to files in separate directories, because it makes it much easier and more
-	  efficient to checkpoint event data when it is all in a single file.
-      - `best_metrics.dat` (best metrics as saved by the progress tracker).
-  - Test event and checkpointer
+# TODO
 
-- [ ] Consolidate `run.lua` and `driver.lua`.
-  - Accept the paths from `parse_options` and perform the deserialization/construction from scratch
-    manually rather than making the user check.
-  - Revise the model interface so that `forward` and `backward` are used instead of `predict` and
-    `evaluate`. Create a separate abstract model class to help with this.
-      - Also have the model register events with the event group provided for each data set, rather
-        than registering the events in the script that is run. This makes more sense and keeps the
-	code modular, since model events are dealt with in the `forward` function anyway.
-  - Make the default driver an instance of the `call` flow graph agent.
-  - The data sources are already provided, since they will be the parents of the driver node in the
-    flow graph.
-  - Default options: model, optimizer, stopping criterion, logger. A table containing information
-    about each parent (data source) in the flow graph must also be provided. This information
-    includes:
-    - Epoch period (i.e. how many times the epoch counter must be advanced to perform an epoch on
-      this data source). The default is 1.
-    - Event group (default is an empty event group, so that it can still be used by the driver and
-      optimizer to register default events).
-  - Verbose option for driver; this causes it to register additional events for timing IO,
-    fprop/bprop, etc., with each provided event group.
-      - Events added by the library should have names beginning with an underscore, so that no name
-        clashes occur with user-defined names.
-
-- [ ] Integrate optimizers with the serialization and event API.
-  - Write test.
-  - Include a "verbose" option for events as with the driver.
-
-- [ ] Revise stopping criteria.
-- [ ] Revise stdout logger so that it logs to a general file instead, with one option being stdout.
-  Perhaps make this another default option, and create the logger automatically?
-
-# Future Features
-
-- Default features to have:
-  - Automatic timing of IO and model evaluation time; warning if IO time is greater than model
-    evaluation time, in which case the IO will no longer be overlapped.
-  - Option to automatically save images of a fixed set of filters for each layer of the network
-    every once in a while.
-  - Utility for computing statistics about filter saturation.
-  - Utility for computing statistics about the gradient from each module.
-  - Bokeh plot with live updates every few seconds, hooked up to the CSV file being written to.
-  - Slider widget for iPython that can be used to scan through a directory of images, e.g.
-    `foo_1.png`, `foo_2.png`, etc. This is useful for visualizing filters and generated images.
-  - Automatic logging of confusion matrix; automatic computation of statistics for most confusable
-    classes, most difficult class to correctly classify, easiest classes to classify, etc.
-
-- Stopping criterion for max time (by extrapolating how many epochs we can do based on the time
-  taken by previous ones).
-
-- Integration with raze, for fast IO and distributed optimization using multiple GPUs.
+- Check for non-GPU compatibility.
+- Verify that fresh installation works.
+- Way to download MNIST data required to run the training script (use GH releases).
+- Finish documentation.

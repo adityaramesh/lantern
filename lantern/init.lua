@@ -49,7 +49,7 @@ require('lantern/adam')
 require('lantern/sgu')
 
 -- Core utilities.
-require('lantern/state')
+require('lantern/global_rng_state')
 require('lantern/checkpointer')
 require('lantern/model_base')
 
