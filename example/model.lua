@@ -112,7 +112,6 @@ function model:__init(args)
 			:add(nn.LeakyReLU(0.2, true))
 			:add(conv(n_in, class_count, 4, 4))
 			:add(nn.View(-1, class_count))
-			--:add(log_softmax())
 	end
 
 	local fm_count    = 64
