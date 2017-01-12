@@ -141,7 +141,7 @@ function lt.run(args)
 	                            	logger      = tl
 	                    }
 
-	local crit = nn.ClassNLLCriterion()
+	local crit = nn.CrossEntropyCriterion()
 	if cutorch then crit:cuda() end
 
 	local jl = cp.logger or lt.json_logger{
@@ -165,26 +165,25 @@ function lt.run(args)
 	if cp:last_epoch() then cur_epoch = cp:last_epoch() + 1
 	else cur_epoch = 1 end
 
-	local make_buffer = function(data)
+	local make_buffer_like = function(buf)
 		local tensor_type
+		local t = buf:type()
 
-		if cutorch then
-			tensor_type = torch.CudaTensor
-		elseif data:type() == 'torch.FloatTensor' then
-			tensor_type = torch.DoubleTensor
-		elseif data:type() == 'torch.ByteTensor' or tensor_type == 'torch.IntTensor' then
-			tensor_type = torch.LongTensor
+		if t == 'torch.FloatTensor' then
+			if cutorch then tensor_type = torch.CudaTensor
+			else tensor_type = torch.DoubleTensor end
 		else
-			tensor_type = torch.factory(data:type())
+			if cutorch then tensor_type = torch.CudaLongTensor
+			else tensor_type = torch.LongTensor end
 		end
 
-		local size = data:size()
+		local size = buf:size()
 		size[1] = batch_size
 		return tensor_type():resize(size)
 	end
 
-	local image_buffer = make_buffer(args.train_data.inputs)
-	local label_buffer = make_buffer(args.train_data.targets)
+	local image_buffer = make_buffer_like(args.train_data.inputs)
+	local label_buffer = make_buffer_like(args.train_data.targets)
 
 	local train_args = {
 		model      = model,
