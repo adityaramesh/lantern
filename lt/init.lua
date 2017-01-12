@@ -35,22 +35,22 @@ if lt.cudnn then
 end
 
 -- Common utilities.
-require('lantern/common')
-require('lantern/filesystem')
-require('lantern/serializable')
-require('lantern/tty_logger')
-require('lantern/json_logger')
-require('lantern/options')
+require('lt/common')
+require('lt/filesystem')
+require('lt/serializable')
+require('lt/tty_logger')
+require('lt/json_logger')
+require('lt/options')
 
 -- Optimizers.
-require('lantern/schedule')
-require('lantern/optimizer_base')
-require('lantern/adam')
-require('lantern/sgu')
+require('lt/schedule')
+require('lt/optimizer_base')
+require('lt/adam')
+require('lt/sgu')
 
 -- Core utilities.
-require('lantern/global_rng_state')
-require('lantern/checkpointer')
-require('lantern/model_base')
+require('lt/global_rng_state')
+require('lt/checkpointer')
+require('lt/model_base')
 
 return lt
