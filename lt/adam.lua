@@ -8,9 +8,9 @@ Required parameters:
 
 Optional Parameters:
 * `step_size`: Default is 1e-3.
-* `beta_1`: Default is 0.9.
-* `beta_2`: Default is 0.999.
-* `epsilon`: Default is 1e-8.
+* `beta_1`:    Default is 0.9.
+* `beta_2`:    Default is 0.999.
+* `epsilon`:   Default is 1e-8.
 * `logger`
 --]]
 function adam:__init(args)

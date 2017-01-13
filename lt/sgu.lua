@@ -7,8 +7,8 @@ Required parameters:
 * `tensor_size`
 
 Optional Parameters:
-* `step_size`: Default is 1e-3.
-* `momentum`: Default is 0.95.
+* `step_size`:     Default is 1e-3.
+* `momentum`:      Default is 0.95.
 * `momentum_type`: Default is 'nag'. Options: 'none', 'classic', or 'nag'.
 * `logger`
 --]]
